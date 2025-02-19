@@ -133,8 +133,12 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             <Toaster />
           </div>
         </div>
-        <ReactQueryDevtools buttonPosition="bottom-right" />
-        <TanStackRouterDevtools position="bottom-left" />
+        {process.env.NODE_ENV !== "production" && (
+          <>
+            <ReactQueryDevtools buttonPosition="bottom-right" />
+            <TanStackRouterDevtools position="bottom-left" />
+          </>
+        )}
         <Scripts />
       </body>
     </html>
