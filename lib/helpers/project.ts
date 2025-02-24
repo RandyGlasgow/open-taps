@@ -10,6 +10,7 @@ const defaultProject: ProjectDoc = {
   is_public: false,
   collaborators: [],
   updated_at: 0,
+  slug: "",
 };
 
 export class Project {
