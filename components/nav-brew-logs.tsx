@@ -14,16 +14,15 @@ import { cn } from "@/lib/utils";
 import { useQuery } from "convex/react";
 import { LinkIcon, PlusIcon } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { Button } from "./ui/button";
 import { Skeleton } from "./ui/skeleton";
 
 export function NavBrewLogs() {
   const projects = useQuery(api.brew_journal.getBrewJournals) || "loading";
-  const router = useRouter();
+  const pathname = usePathname();
 
-  const active = (id: string) =>
-    window.location.pathname.includes(`/dashboard/projects/${id}`);
+  const active = (id: string) => pathname.includes(`/dashboard/projects/${id}`);
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
       <div className="flex items-center justify-between w-full">
@@ -52,16 +51,16 @@ export function NavBrewLogs() {
             projects.map((item) => (
               <SidebarMenuItem key={item.name}>
                 <SidebarMenuButton
-                  onClick={() => {
-                    router.push(`/dashboard/projects/${item._id}`);
-                  }}
+                  asChild
                   className={cn(
                     "flex w-full items-center gap-2",
                     active(item._id) && "font-bold",
                   )}
                 >
-                  <LinkIcon className="text-muted-foreground h-2 w-2" />
-                  <span>{item.name}</span>
+                  <Link href={`/dashboard/projects/${item._id}`}>
+                    <LinkIcon className="text-muted-foreground h-2 w-2" />
+                    <span>{item.name}</span>
+                  </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             ))

@@ -1,106 +1,101 @@
 "use client";
-import { Button } from "@/components/ui/button";
-import {
-  ContextMenu,
-  ContextMenuContent,
-  ContextMenuItem,
-  ContextMenuTrigger,
-} from "@/components/ui/context-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
-import { Panel, ReactFlow, useReactFlow } from "@xyflow/react";
+import {
+  applyEdgeChanges,
+  applyNodeChanges,
+  Background,
+  Controls,
+  Edge,
+  Node,
+  ReactFlow,
+  ReactFlowProvider,
+  Viewport,
+} from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { useQuery } from "convex/react";
 import { useParams } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
-
-const Note = ({ data }: { data: unknown }) => {
-  console.log(data);
-  return (
-    <ContextMenu>
-      <ContextMenuTrigger>
-        <div className="w-10 h-10 bg-gray-300 rounded-md"></div>
-      </ContextMenuTrigger>
-      <ContextMenuContent>
-        <ContextMenuItem>Add Node 2</ContextMenuItem>
-      </ContextMenuContent>
-    </ContextMenu>
-  );
-};
+import { useCallback, useEffect, useState } from "react";
+import { ActionMenuBar } from "../components/graph/action-menu-bar";
+import { GraphActionsContextMenu } from "../components/graph/graph-actions-context-menu";
+import { LogEntryNode } from "../components/graph/nodes";
 
 const nodeTypes = {
-  note: Note,
+  logEntry: LogEntryNode,
 };
-
-const initialNodes = [
-  {
-    id: "1",
-    position: { x: 0, y: 0 },
-    data: { label: "1" },
-    notes: [],
-    type: "note",
-  },
-  { id: "2", position: { x: 0, y: 100 }, data: { label: "2" }, notes: [] },
-];
-const initialEdges = [{ id: "e1-2", source: "1", target: "2" }];
 
 export default function Page() {
   const { projectId } = useParams<{ projectId: Id<"brew_journal"> }>();
-  const project =
-    useQuery(api.brew_journal.getBrewJournal, { id: projectId }) || "loading";
 
-  const reactFlowRef = useRef<HTMLDivElement>(null);
+  const brewJournal =
+    useQuery(
+      api.brew_journal.getBrewJournal,
+      projectId
+        ? {
+            id: projectId,
+          }
+        : "skip",
+    ) || "loading";
+
+  const [nodes, setNodes] = useState<Node[]>([]);
+  const [edges, setEdges] = useState<Edge[]>([]);
+  const [viewport, setViewport] = useState<Viewport>({
+    x: 0,
+    y: 0,
+    zoom: 1,
+  });
+
   useEffect(() => {
-    // find the a tag with the href that contains the phrase reactflow
-    const aTags = reactFlowRef.current?.querySelectorAll("a");
-    aTags?.forEach((a) => {
-      if (a.href.includes("reactflow")) {
-        a.remove();
-      }
-    });
-  }, []);
+    if (!brewJournal || brewJournal === "loading") return;
 
-  if (project === "loading") {
-    return <Skeleton className="w-full h-full" />;
-  }
+    const { nodes, edges, viewport } = JSON.parse(brewJournal.json_data);
+    setNodes(nodes);
+    setEdges(edges);
+    setViewport(viewport);
+  }, [brewJournal]);
+
+  const onNodesChange = useCallback(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (changes: any) => setNodes((nds) => applyNodeChanges(changes, nds)),
+    [],
+  );
+  const onEdgesChange = useCallback(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (changes: any) => setEdges((eds) => applyEdgeChanges(changes, eds)),
+    [],
+  );
 
   return (
     <>
-      <h1 className="text-2xl font-bold">{project.name}</h1>
+      {brewJournal === "loading" ? (
+        <Skeleton className="h-9 w-full" />
+      ) : (
+        <h1 className="text-2xl font-bold h-9">{brewJournal.name}</h1>
+      )}
       <div
         className="w-full h-full rounded-md border-dashed border border-gray-300"
-        ref={reactFlowRef}
+        ref={null}
       >
-        <ContextMenu>
-          <ContextMenuTrigger>
+        <ReactFlowProvider>
+          <GraphActionsContextMenu>
             <ReactFlow
-              nodes={initialNodes}
-              edges={initialEdges}
+              viewport={viewport}
               nodeTypes={nodeTypes}
+              nodes={nodes}
+              edges={edges}
+              onNodesChange={onNodesChange}
+              onEdgesChange={onEdgesChange}
+              onViewportChange={setViewport}
+              attributionPosition="top-right"
             >
-              <PanelActions />
+              <ActionMenuBar />
+              <Controls position="bottom-right" />
+              <Background />
             </ReactFlow>
-          </ContextMenuTrigger>
-          <ContextMenuContent>
-            <ContextMenuItem>Add Node</ContextMenuItem>
-          </ContextMenuContent>
-        </ContextMenu>
+          </GraphActionsContextMenu>
+        </ReactFlowProvider>
       </div>
     </>
   );
 }
-
-const PanelActions = () => {
-  const { toObject } = useReactFlow();
-  const [data, setData] = useState<unknown>(null);
-  useEffect(() => {
-    setData(toObject());
-  }, [toObject]);
-
-  return (
-    <Panel className="z-10">
-      <Button onClick={() => console.log(data)}>Add Node</Button>
-    </Panel>
-  );
-};

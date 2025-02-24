@@ -26,11 +26,15 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { useUser } from "@/hooks/use-user";
+import { useAuthActions } from "@convex-dev/auth/react";
+import { useRouter } from "next/navigation";
 import { Skeleton } from "./ui/skeleton";
 
 export function NavUser() {
   const { isMobile } = useSidebar();
   const user = useUser();
+  const actions = useAuthActions();
+  const router = useRouter();
   return (
     <SidebarMenu>
       <SidebarMenuItem>
@@ -96,7 +100,13 @@ export function NavUser() {
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={async () => {
+                    await actions.signOut().then(() => {
+                      router.replace("/login");
+                    });
+                  }}
+                >
                   <LogOut />
                   Log out
                 </DropdownMenuItem>
