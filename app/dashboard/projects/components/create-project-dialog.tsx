@@ -8,8 +8,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { api } from "@/convex/_generated/api";
-import { useMutation, useQuery } from "convex/react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -17,22 +17,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
-import { useState } from "react";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { api } from "@/convex/_generated/api";
 import { TooltipArrow } from "@radix-ui/react-tooltip";
+import { useMutation, useQuery } from "convex/react";
+import { useState } from "react";
 
 export function CreateProjectDialog({ trigger }: { trigger: React.ReactNode }) {
   const [open, setOpen] = useState(false);
 
-  const beerStyles = useQuery(api.beer_styles.getBeerStyles);
-  const postProject = useMutation(api.project.createProject);
+  const beerStyles = useQuery(api.beer_styles.getBeerStyles) || "loading";
+  const postProject = useMutation(api.brew_journal.createBrewJournal);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -47,9 +48,7 @@ export function CreateProjectDialog({ trigger }: { trigger: React.ReactNode }) {
     }
 
     postProject({
-      collaborators: [],
       description: String(`${data.idea}`),
-      is_public: false,
       name: String(`${data.name}`),
     }).then(() => {
       setOpen(false);
@@ -68,11 +67,8 @@ export function CreateProjectDialog({ trigger }: { trigger: React.ReactNode }) {
         </TooltipContent>
       </Tooltip>
       <DialogContent>
-        <DialogHeader>
-          <DialogTitle className="flex justify-between items-center">
-            Create Brew Project
-          </DialogTitle>
-        </DialogHeader>
+        <DialogTitle className="sr-only">Create Brew Project</DialogTitle>
+        <DialogHeader>Create Brew Log</DialogHeader>
         <DialogDescription asChild>
           <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
             <Label htmlFor="name">Name</Label>
@@ -88,11 +84,15 @@ export function CreateProjectDialog({ trigger }: { trigger: React.ReactNode }) {
                 <SelectValue placeholder="What are you brewing?" />
               </SelectTrigger>
               <SelectContent side="bottom" className="max-h-[250px]">
-                {beerStyles?.map((s) => (
-                  <SelectItem key={s._id} value={s._id}>
-                    {s.display_name}
-                  </SelectItem>
-                ))}
+                {beerStyles === "loading" ? (
+                  <Skeleton className="h-10 w-full" />
+                ) : (
+                  beerStyles?.map((s) => (
+                    <SelectItem key={s._id} value={s._id}>
+                      {s.display_name}
+                    </SelectItem>
+                  ))
+                )}
               </SelectContent>
             </Select>
 

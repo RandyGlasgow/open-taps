@@ -1,6 +1,7 @@
 "use client";
 import { HomeIcon } from "lucide-react";
-
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Fragment, useMemo } from "react";
 import {
   Breadcrumb,
@@ -9,7 +10,6 @@ import {
   BreadcrumbList,
   BreadcrumbSeparator,
 } from "../../../../components/ui/breadcrumb";
-import { usePathname } from "next/navigation";
 
 export const DashboardBreadcrumb = () => {
   const pathname = usePathname();
@@ -26,10 +26,10 @@ export const DashboardBreadcrumb = () => {
           <Fragment key={part}>
             <BreadcrumbSeparator className="hidden md:block" />
             <BreadcrumbItem>
-              <BreadcrumbLink
-                href={`/${array.slice(0, index).join("/")}/${part}`}
-              >
-                {part}
+              <BreadcrumbLink asChild>
+                <Link href={`/${array.slice(0, index).join("/")}/${part}`}>
+                  {part}
+                </Link>
               </BreadcrumbLink>
             </BreadcrumbItem>
           </Fragment>

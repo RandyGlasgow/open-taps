@@ -1,10 +1,6 @@
 "use client";
 
-import * as React from "react";
-import { Command, FolderIcon } from "lucide-react";
-import { NavMain } from "@/components/nav-main";
-import { NavProjects } from "@/components/nav-projects";
-import { NavSecondary } from "@/components/nav-secondary";
+import { NavBrewLogs } from "@/components/nav-brew-logs";
 import { NavUser } from "@/components/nav-user";
 import {
   Sidebar,
@@ -15,117 +11,114 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { Command } from "lucide-react";
+import * as React from "react";
 
-const data = {
-  user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
-  navMain: [
-    {
-      title: "Projects",
-      url: "/dashboard/projects",
-      icon: FolderIcon,
-      isActive: true,
-      items: [],
-    },
-    // {
-    //   title: "Models",
-    //   url: "#",
-    //   icon: Bot,
-    //   items: [
-    //     {
-    //       title: "Genesis",
-    //       url: "#",
-    //     },
-    //     {
-    //       title: "Explorer",
-    //       url: "#",
-    //     },
-    //     {
-    //       title: "Quantum",
-    //       url: "#",
-    //     },
-    //   ],
-    // },
-    // {
-    //   title: "Documentation",
-    //   url: "#",
-    //   icon: BookOpen,
-    //   items: [
-    //     {
-    //       title: "Introduction",
-    //       url: "#",
-    //     },
-    //     {
-    //       title: "Get Started",
-    //       url: "#",
-    //     },
-    //     {
-    //       title: "Tutorials",
-    //       url: "#",
-    //     },
-    //     {
-    //       title: "Changelog",
-    //       url: "#",
-    //     },
-    //   ],
-    // },
-    // {
-    //   title: "Settings",
-    //   url: "#",
-    //   icon: Settings2,
-    //   items: [
-    //     {
-    //       title: "General",
-    //       url: "#",
-    //     },
-    //     {
-    //       title: "Team",
-    //       url: "#",
-    //     },
-    //     {
-    //       title: "Billing",
-    //       url: "#",
-    //     },
-    //     {
-    //       title: "Limits",
-    //       url: "#",
-    //     },
-    //   ],
-    // },
-  ],
-  navSecondary: [
-    // {
-    //   title: "Support",
-    //   url: "#",
-    //   icon: LifeBuoy,
-    // },
-    // {
-    //   title: "Feedback",
-    //   url: "#",
-    //   icon: Send,
-    // },
-  ],
-  projects: [
-    // {
-    //   name: "Design Engineering",
-    //   url: "#",
-    //   icon: Frame,
-    // },
-    // {
-    //   name: "Sales & Marketing",
-    //   url: "#",
-    //   icon: PieChart,
-    // },
-    // {
-    //   name: "Travel",
-    //   url: "#",
-    //   icon: Map,
-    // },
-  ],
-};
+// const data = {
+//   navMain: [
+//     {
+//       title: "Projects",
+//       url: "/dashboard/projects",
+//       icon: FolderIcon,
+//       isActive: true,
+//       items: [],
+//     },
+//     // {
+//     //   title: "Models",
+//     //   url: "#",
+//     //   icon: Bot,
+//     //   items: [
+//     //     {
+//     //       title: "Genesis",
+//     //       url: "#",
+//     //     },
+//     //     {
+//     //       title: "Explorer",
+//     //       url: "#",
+//     //     },
+//     //     {
+//     //       title: "Quantum",
+//     //       url: "#",
+//     //     },
+//     //   ],
+//     // },
+//     // {
+//     //   title: "Documentation",
+//     //   url: "#",
+//     //   icon: BookOpen,
+//     //   items: [
+//     //     {
+//     //       title: "Introduction",
+//     //       url: "#",
+//     //     },
+//     //     {
+//     //       title: "Get Started",
+//     //       url: "#",
+//     //     },
+//     //     {
+//     //       title: "Tutorials",
+//     //       url: "#",
+//     //     },
+//     //     {
+//     //       title: "Changelog",
+//     //       url: "#",
+//     //     },
+//     //   ],
+//     // },
+//     // {
+//     //   title: "Settings",
+//     //   url: "#",
+//     //   icon: Settings2,
+//     //   items: [
+//     //     {
+//     //       title: "General",
+//     //       url: "#",
+//     //     },
+//     //     {
+//     //       title: "Team",
+//     //       url: "#",
+//     //     },
+//     //     {
+//     //       title: "Billing",
+//     //       url: "#",
+//     //     },
+//     //     {
+//     //       title: "Limits",
+//     //       url: "#",
+//     //     },
+//     //   ],
+//     // },
+//   ],
+//   navSecondary: [
+//     // {
+//     //   title: "Support",
+//     //   url: "#",
+//     //   icon: LifeBuoy,
+//     // },
+//     // {
+//     //   title: "Feedback",
+//     //   url: "#",
+//     //   icon: Send,
+//     // },
+//   ],
+//   projects: [
+//     // {
+//     //   name: "Design Engineering",
+//     //   url: "#",
+//     //   icon: Frame,
+//     // },
+//     // {
+//     //   name: "Sales & Marketing",
+//     //   url: "#",
+//     //   icon: PieChart,
+//     // },
+//     // {
+//     //   name: "Travel",
+//     //   url: "#",
+//     //   icon: Map,
+//     // },
+//   ],
+// };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
@@ -148,12 +141,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
-        <NavProjects projects={data.projects} />
-        <NavSecondary items={data.navSecondary} className="mt-auto" />
+        {/* <NavMain items={data.navMain} /> */}
+        <NavBrewLogs />
+        {/* <NavSecondary items={data.navSecondary} className="mt-auto" /> */}
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser />
       </SidebarFooter>
     </Sidebar>
   );

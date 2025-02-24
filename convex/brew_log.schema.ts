@@ -1,10 +1,24 @@
 import { defineTable } from "convex/server";
 import { v } from "convex/values";
 
-const brew_log_schema = defineTable({
-  owner_id: v.id("user"),
-  project_id: v.id("project"),
+export const brew_journal_schema = defineTable({
   name: v.string(),
   description: v.string(),
   updated_at: v.number(),
+
+  // the graph data
+  json_data: v.string(),
+
+  // brew_log_entry
+  associated_entries: v.array(v.id("brew_log_entry")),
+
+  // user
+  user_id: v.id("users"),
+  notes: v.array(v.id("note")),
+});
+
+export const brew_journal_entry_schema = defineTable({
+  brew_journal_id: v.id("brew_journal"),
+  json_data: v.string(),
+  notes: v.array(v.id("note")),
 });

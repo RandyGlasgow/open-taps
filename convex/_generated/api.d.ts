@@ -15,8 +15,9 @@ import type {
 } from "convex/server";
 import type * as auth from "../auth.js";
 import type * as beer_styles from "../beer_styles.js";
+import type * as brew_journal from "../brew_journal.js";
 import type * as http from "../http.js";
-import type * as project from "../project.js";
+import type * as user from "../user.js";
 
 /**
  * A utility for referencing Convex functions in your app's API.
@@ -29,8 +30,9 @@ import type * as project from "../project.js";
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   beer_styles: typeof beer_styles;
+  brew_journal: typeof brew_journal;
   http: typeof http;
-  project: typeof project;
+  user: typeof user;
 }>;
 export declare const api: FilterApi<
   typeof fullApi,

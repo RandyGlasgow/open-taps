@@ -8,4 +8,5 @@ export const projectSchema = defineTable({
   collaborators: v.array(v.id("users")),
   updated_at: v.number(),
   is_public: v.boolean(),
+  json_data: v.optional(v.string()),
 });
