@@ -1,6 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { BeakerIcon, FlaskConical } from "lucide-react";
+import { FlaskConical } from "lucide-react";
 import { CreateProjectDialog } from "./create-project-dialog";
 
 export function CreateProjectPlaceholder() {

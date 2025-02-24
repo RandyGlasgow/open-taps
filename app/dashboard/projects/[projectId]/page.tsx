@@ -21,9 +21,6 @@ export default function Page() {
     useQuery(api.project.getProject, { id: projectId }) || "loading";
 
   const reactFlowRef = useRef<HTMLDivElement>(null);
-  if (project === "loading") {
-    return <Skeleton className="w-full h-full" />;
-  }
   useEffect(() => {
     // find the a tag with the href that contains the phrase reactflow
     const aTags = reactFlowRef.current?.querySelectorAll("a");
@@ -33,6 +30,10 @@ export default function Page() {
       }
     });
   }, []);
+
+  if (project === "loading") {
+    return <Skeleton className="w-full h-full" />;
+  }
 
   return (
     <>

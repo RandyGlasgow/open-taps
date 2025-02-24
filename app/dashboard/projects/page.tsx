@@ -1,33 +1,14 @@
 "use client";
-import { CreateProjectPlaceholder } from "./components/create-project-placeholder";
 import { api } from "@/convex/_generated/api";
-import { useMutation, useQuery } from "convex/react";
-import {
-  ContextMenu,
-  ContextMenuContent,
-  ContextMenuItem,
-  ContextMenuTrigger,
-} from "@/components/ui/context-menu";
-import {
-  Card,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { useQuery } from "convex/react";
 import Link from "next/link";
-import {
-  LockIcon,
-  MoreHorizontalIcon,
-  PlusIcon,
-  UnlockIcon,
-} from "lucide-react";
+import { LockIcon, PlusIcon, UnlockIcon } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { TooltipArrow } from "@radix-ui/react-tooltip";
-import { Doc } from "@/convex/_generated/dataModel";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
