@@ -13,8 +13,10 @@ import type {
   FilterApi,
   FunctionReference,
 } from "convex/server";
-import type * as board from "../board.js";
-import type * as crons from "../crons.js";
+import type * as auth from "../auth.js";
+import type * as beer_styles from "../beer_styles.js";
+import type * as http from "../http.js";
+import type * as project from "../project.js";
 
 /**
  * A utility for referencing Convex functions in your app's API.
@@ -25,8 +27,10 @@ import type * as crons from "../crons.js";
  * ```
  */
 declare const fullApi: ApiFromModules<{
-  board: typeof board;
-  crons: typeof crons;
+  auth: typeof auth;
+  beer_styles: typeof beer_styles;
+  http: typeof http;
+  project: typeof project;
 }>;
 export declare const api: FilterApi<
   typeof fullApi,
