@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { authenticateAndGetUser } from "./auth";
 import { Project } from "../lib/helpers/project";
+import { getAuthUserId } from "@convex-dev/auth/server";
 
 export const createProject = mutation({
   args: {
@@ -11,11 +12,14 @@ export const createProject = mutation({
     collaborators: v.array(v.id("users")),
   },
   handler: async (ctx, args) => {
-    const user = await authenticateAndGetUser(ctx);
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      throw new Error("User not found");
+    }
 
     const project = new Project()
       .set({
-        owner_id: user._id,
+        owner_id: userId,
         updated_at: Date.now(),
         name: args.name,
         description: args.description,
@@ -35,7 +39,10 @@ export const updateProject = mutation({
     is_public: v.boolean(),
   },
   handler: async (ctx, args) => {
-    const user = await authenticateAndGetUser(ctx);
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      throw new Error("User not found");
+    }
 
     const project = await ctx.db.get(args.id);
     if (!project) {
@@ -63,7 +70,10 @@ export const getProject = query({
       throw new Error("Project ID is required");
     }
 
-    const user = await authenticateAndGetUser(ctx);
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      throw new Error("User not found");
+    }
 
     const project = await ctx.db.get(args.id);
     if (!project) {
@@ -71,8 +81,8 @@ export const getProject = query({
     }
 
     if (
-      project.owner_id !== user._id &&
-      !project.collaborators.includes(user._id)
+      project.owner_id !== userId &&
+      !project.collaborators.includes(userId)
     ) {
       throw new Error("You are not allowed to access this project");
     }
@@ -83,11 +93,14 @@ export const getProject = query({
 export const getProjects = query({
   args: {},
   handler: async (ctx) => {
-    const user = await authenticateAndGetUser(ctx);
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      throw new Error("User not found");
+    }
 
     return await ctx.db
       .query("user_project")
-      .filter((q) => q.eq(q.field("owner_id"), user._id))
+      .filter((q) => q.eq(q.field("owner_id"), userId))
       .collect();
   },
 });

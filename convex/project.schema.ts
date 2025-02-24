@@ -7,6 +7,5 @@ export const projectSchema = defineTable({
   owner_id: v.id("users"),
   collaborators: v.array(v.id("users")),
   updated_at: v.number(),
-  slug: v.string(),
   is_public: v.boolean(),
 });
