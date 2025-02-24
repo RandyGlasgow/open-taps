@@ -21,7 +21,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useState } from "react";
-import { Project } from "@/lib/helpers/project";
 import {
   Tooltip,
   TooltipContent,
@@ -113,7 +112,7 @@ export function CreateProjectDialog({ trigger }: { trigger: React.ReactNode }) {
                 Cancel
               </Button>
               <Button type="submit" className="hover:animate-pulse">
-                Let's brew!
+                Let&apos;s brew!
               </Button>
             </div>
           </form>

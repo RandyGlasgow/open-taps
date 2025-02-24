@@ -20,8 +20,8 @@ export function LoginForm({
   ...props
 }: React.ComponentPropsWithoutRef<"div">) {
   const { signIn } = useAuthActions();
-  const [flow, setFlow] = useState<"signIn" | "signUp">("signIn");
-  const [error, setError] = useState<string | null>(null);
+  const [flow] = useState<"signIn" | "signUp">("signIn");
+  const [, setError] = useState<string | null>(null);
   const router = useRouter();
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();

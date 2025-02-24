@@ -25,7 +25,6 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { useAuthActions } from "@convex-dev/auth/react";
 
 export function NavUser({
   user,
@@ -37,8 +36,6 @@ export function NavUser({
   };
 }) {
   const { isMobile } = useSidebar();
-
-  const { signOut } = useAuthActions();
 
   return (
     <SidebarMenu>

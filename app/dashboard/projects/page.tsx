@@ -13,7 +13,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { CreateProjectDialog } from "./components/create-project-dialog";
-import { checkForPipeAndSplit } from "@/lib/helpers/check-and-split";
 
 export default function Page() {
   return (
@@ -40,7 +39,6 @@ const ProjectTable = () => {
   if (projects === "loading") {
     return <Skeleton className="w-full h-full" />;
   }
-  const { name, id } = checkForPipeAndSplit(projects[0].slug || "");
   return (
     <Table>
       <TableBody>

@@ -15,9 +15,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { api } from "@/convex/_generated/api";
-import { useQuery } from "convex/react";
-import { usePathname } from "next/navigation";
 
 const data = {
   user: {
@@ -131,17 +128,6 @@ const data = {
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const projects = useQuery(api.project.getProjects);
-  const pathname = usePathname();
-
-  const projectList = {
-    icon: FolderIcon,
-    isActive: pathname.includes("projects"),
-    title: "Projects",
-    url: `/dashboard/projects`,
-    items: [],
-  } satisfies (typeof data.navMain)[number];
-
   return (
     <Sidebar variant="inset" {...props}>
       <SidebarHeader>

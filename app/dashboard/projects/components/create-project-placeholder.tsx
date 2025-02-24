@@ -7,9 +7,9 @@ export function CreateProjectPlaceholder() {
     <div className="h-full flex flex-col gap-4 justify-center items-center">
       <h2 className="text-2xl font-bold">Hmmm...</h2>
       <p className="text-sm text-muted-foreground text-center">
-        Looks like you don't have any brew projects yet.
+        Looks like you don&apos;t have any brew projects yet.
         <br />
-        Let's fix that!
+        Let&apos;s fix that!
       </p>
       <CreateProjectDialog
         trigger={
