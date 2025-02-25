@@ -1,5 +1,6 @@
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { v } from "convex/values";
+import { DEFAULT_NODE, defaultNode } from "../lib/helpers/default-node";
 import { mutation, query } from "./_generated/server";
 
 export const createBrewJournal = mutation({
@@ -18,9 +19,26 @@ export const createBrewJournal = mutation({
       description: args.description,
       user_id: userId,
       updated_at: Date.now(),
-      json_data: "{}",
+      json_data: JSON.stringify({ nodes: [defaultNode()], edges: [] }),
       associated_entries: [],
       notes: [],
+    });
+
+    const brewJournalEntry = await ctx.db.insert("brew_journal_entry", {
+      brew_journal_id: brewJournal,
+      json_data: "{}",
+      notes: [],
+    });
+
+    await ctx.db.patch(brewJournal, {
+      json_data: JSON.stringify({
+        nodes: [
+          defaultNode({
+            entryId: brewJournalEntry,
+          }),
+        ],
+        edges: [],
+      }),
     });
 
     return brewJournal;
@@ -121,7 +139,7 @@ export const createBrewJournalEntry = mutation({
 
     const brewJournalEntry = await ctx.db.insert("brew_journal_entry", {
       brew_journal_id: args.id,
-      json_data: "{}",
+      json_data: JSON.stringify({ nodes: [DEFAULT_NODE], edges: [] }),
       notes: [],
     });
     return brewJournalEntry;

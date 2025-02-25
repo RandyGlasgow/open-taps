@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 export const useDebounce = (func: () => void, delay: number) => {
   useEffect(() => {
@@ -15,6 +15,11 @@ export const useDebounceCallback = (func: () => void, delay: number) => {
 };
 
 const knownDebounceIntervals = {
+  "1s": 1000,
+  "2s": 2000,
+  "3s": 3000,
+  "5s": 5000,
+  "10s": 10000,
   "30s": 30000,
   "1m": 60000,
   "2m": 120000,
@@ -37,4 +42,21 @@ export const useDebounceInterval = (
     const interval = setInterval(func, knownDebounceIntervals[delay]);
     return () => clearInterval(interval);
   }, [func, delay]);
+};
+
+export const useTimeoutToggle = (
+  initialState: boolean,
+  delay: keyof typeof knownDebounceIntervals,
+) => {
+  const [state, setState] = useState(initialState);
+
+  const toggleState = useCallback(() => {
+    setState((prev) => !prev);
+    const timeout = setTimeout(() => {
+      setState(initialState);
+    }, knownDebounceIntervals[delay]);
+    return () => clearTimeout(timeout);
+  }, [delay, initialState, setState]);
+
+  return [state, toggleState] as const;
 };
