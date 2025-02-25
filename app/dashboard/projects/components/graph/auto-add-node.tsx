@@ -15,7 +15,6 @@ import {
   Controls,
   Edge,
   Node,
-  OnConnectEnd,
   Panel,
   ReactFlow,
   useEdgesState,
@@ -24,12 +23,11 @@ import {
 } from "@xyflow/react";
 import { useMutation, useQuery } from "convex/react";
 import { useParams } from "next/navigation";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { GraphNode, RootNode } from "./graph-node";
 
-let id_base = 1;
-const getId = () => `${id_base++}`;
+const getRandomId = () => Math.random().toString(36).substring(2, 15);
 
 const AddNodeOnEdgeDrop = () => {
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
@@ -41,13 +39,16 @@ const AddNodeOnEdgeDrop = () => {
     [setEdges],
   );
 
-  type Params = Parameters<OnConnectEnd>;
+  const ref = useRef(getRandomId());
+
   const onConnectEnd = useCallback(
-    (event: Params[0], connectionState: Params[1]) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (event: any, connectionState: any) => {
       // when a connection is dropped on the pane it's not valid
       if (!connectionState.isValid) {
         // we need to remove the wrapper bounds, in order to get the correct position
-        const id = getId();
+        const id = ref.current;
+        ref.current = getRandomId();
         const { clientX, clientY } =
           "changedTouches" in event ? event.changedTouches[0] : event;
         const newNode = {
@@ -56,6 +57,7 @@ const AddNodeOnEdgeDrop = () => {
             x: clientX,
             y: clientY + 20,
           }),
+          type: "log_entry",
           data: { label: `Node ${id}` },
           origin: [0.5, 0.0],
         };
@@ -64,8 +66,8 @@ const AddNodeOnEdgeDrop = () => {
         setNodes((nds) => nds.concat(newNode as any));
         setEdges((eds) =>
           eds.concat({
-            id,
-            source: connectionState.fromNode!.id,
+            id: `${id}`,
+            source: connectionState.fromNode.id,
             target: id,
           }),
         );
@@ -82,21 +84,18 @@ const AddNodeOnEdgeDrop = () => {
 
   const updateJournal = useMutation(api.brew_journal.updateBrewJournal);
 
-  const [isUpdating, toggleIsUpdating] = useTimeoutToggle(false, "3s");
-  const update = useCallback(
-    () =>
-      updateJournal({
-        id: projectId,
-        json_data: JSON.stringify(toObject()),
+  const [isUpdating, toggleIsUpdating] = useTimeoutToggle(false, "2s");
+  const update = () =>
+    updateJournal({
+      id: projectId,
+      json_data: JSON.stringify(toObject()),
+    })
+      .then(() => {
+        toggleIsUpdating();
       })
-        .then(() => {
-          toggleIsUpdating();
-        })
-        .catch(() => {
-          toast.error("Failed to update journal");
-        }),
-    [projectId, toObject, updateJournal, toggleIsUpdating],
-  );
+      .catch(() => {
+        toast.error("Failed to update journal");
+      });
   useDebounceInterval(update, "10m");
 
   useEffect(() => {
@@ -126,7 +125,7 @@ const AddNodeOnEdgeDrop = () => {
               size="icon"
               onClick={update}
               className={cn(
-                "rounded-full bg-green-500 w-3 h-3 data-[updating=true]:animate-pulse overflow-hidden whitespace-nowrap",
+                "rounded-full bg-green-500 w-3 h-3 data-[updating=true]:animate-ping overflow-hidden whitespace-nowrap",
               )}
               data-updating={isUpdating}
             />
