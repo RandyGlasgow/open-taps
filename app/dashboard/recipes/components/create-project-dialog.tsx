@@ -27,19 +27,20 @@ import {
 import { api } from "@/convex/_generated/api";
 import { TooltipArrow } from "@radix-ui/react-tooltip";
 import { useMutation, useQuery } from "convex/react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export function CreateProjectDialog({ trigger }: { trigger: React.ReactNode }) {
   const [open, setOpen] = useState(false);
 
   const beerStyles = useQuery(api.beer_styles.getBeerStyles) || "loading";
-  const postProject = useMutation(api.brew_journal.createBrewJournal);
+  const postProject = useMutation(api.recipe.createRecipeTree);
+  const router = useRouter();
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.target as HTMLFormElement);
     const data = Object.fromEntries(formData);
-    console.log(data);
 
     // verify that the name is not empty
     if (!data.name) {
@@ -47,12 +48,14 @@ export function CreateProjectDialog({ trigger }: { trigger: React.ReactNode }) {
       return;
     }
 
-    postProject({
+    const recipeTreeId = await postProject({
       description: String(`${data.idea}`),
       name: String(`${data.name}`),
-    }).then(() => {
-      setOpen(false);
     });
+    if (recipeTreeId) {
+      router.push(`/dashboard/recipes/${recipeTreeId}`);
+    }
+    setOpen(false);
   };
 
   return (

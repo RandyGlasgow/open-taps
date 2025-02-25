@@ -15,8 +15,9 @@ import type {
 } from "convex/server";
 import type * as auth from "../auth.js";
 import type * as beer_styles from "../beer_styles.js";
-import type * as brew_journal from "../brew_journal.js";
+import type * as graph from "../graph.js";
 import type * as http from "../http.js";
+import type * as recipe from "../recipe.js";
 import type * as user from "../user.js";
 
 /**
@@ -30,8 +31,9 @@ import type * as user from "../user.js";
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   beer_styles: typeof beer_styles;
-  brew_journal: typeof brew_journal;
+  graph: typeof graph;
   http: typeof http;
+  recipe: typeof recipe;
   user: typeof user;
 }>;
 export declare const api: FilterApi<

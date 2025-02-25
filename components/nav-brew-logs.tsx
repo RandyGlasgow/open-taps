@@ -1,6 +1,6 @@
 "use client";
 
-import { CreateProjectDialog } from "@/app/dashboard/projects/components/create-project-dialog";
+import { CreateProjectDialog } from "@/app/dashboard/recipes/components/create-project-dialog";
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -12,23 +12,23 @@ import {
 import { api } from "@/convex/_generated/api";
 import { cn } from "@/lib/utils";
 import { useQuery } from "convex/react";
-import { LinkIcon, PlusIcon } from "lucide-react";
+import { GitBranchPlus, PlusIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "./ui/button";
 import { Skeleton } from "./ui/skeleton";
 
 export function NavBrewLogs() {
-  const projects = useQuery(api.brew_journal.getBrewJournals) || "loading";
+  const recipeTrees = useQuery(api.recipe.getAllRecipeTrees) || "loading";
   const pathname = usePathname();
 
-  const active = (id: string) => pathname.includes(`/dashboard/projects/${id}`);
+  const active = (id: string) => pathname.includes(`/dashboard/recipes/${id}`);
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
       <div className="flex items-center justify-between w-full">
-        <Link href="/dashboard/projects" className="hover:underline">
-          <SidebarGroupLabel className="text-nowrap">
-            Brew Logs
+        <Link href="/dashboard/recipes" className="hover:underline">
+          <SidebarGroupLabel className="text-nowrap flex items-center gap-2">
+            Recipe Trees
           </SidebarGroupLabel>
         </Link>
         <CreateProjectDialog
@@ -43,12 +43,12 @@ export function NavBrewLogs() {
           }
         />
       </div>
-      <SidebarMenuSub>
+      <SidebarMenuSub className="border-none p-0">
         <SidebarMenu>
-          {projects === "loading" ? (
+          {recipeTrees === "loading" ? (
             <Skeleton className="h-10 w-full" />
           ) : (
-            projects.map((item) => (
+            recipeTrees.map((item) => (
               <SidebarMenuItem key={item.name}>
                 <SidebarMenuButton
                   asChild
@@ -57,8 +57,8 @@ export function NavBrewLogs() {
                     active(item._id) && "font-bold",
                   )}
                 >
-                  <Link href={`/dashboard/projects/${item._id}`}>
-                    <LinkIcon className="text-muted-foreground h-2 w-2" />
+                  <Link href={`/dashboard/recipes/${item._id}`}>
+                    <GitBranchPlus className="text-muted-foreground h-2 w-2" />
                     <span>{item.name}</span>
                   </Link>
                 </SidebarMenuButton>

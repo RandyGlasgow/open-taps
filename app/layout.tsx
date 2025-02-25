@@ -1,4 +1,5 @@
 import ConvexClientProvider from "@/components/ConvexClientProvider";
+import { ErrorBoundary } from "@/components/error-redirect";
 import { Toaster } from "@/components/ui/sonner";
 import { ConvexAuthNextjsServerProvider } from "@convex-dev/auth/nextjs/server";
 import type { Metadata } from "next";
@@ -29,15 +30,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ConvexAuthNextjsServerProvider>
-      <html lang="en">
-        <body
-          className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-        >
-          <ConvexClientProvider>{children}</ConvexClientProvider>
-          <Toaster />
-        </body>
-      </html>
-    </ConvexAuthNextjsServerProvider>
+    <ErrorBoundary redirect="/error">
+      <ConvexAuthNextjsServerProvider>
+        <html lang="en">
+          <body
+            className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+          >
+            <ConvexClientProvider>{children}</ConvexClientProvider>
+            <Toaster />
+          </body>
+        </html>
+      </ConvexAuthNextjsServerProvider>
+    </ErrorBoundary>
   );
 }

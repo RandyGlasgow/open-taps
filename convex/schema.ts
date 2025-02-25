@@ -1,11 +1,8 @@
 import { authTables } from "@convex-dev/auth/server";
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
-import {
-  brew_journal_entry_schema,
-  brew_journal_schema,
-} from "./brew_log.schema";
-import { note_schema } from "./note.schema";
+import { graph_schema, node_schema } from "./graph.schema";
+import { recipe_schema, recipe_tree_schema } from "./recipe.schema";
 
 // The schema is normally optional, but Convex Auth
 // requires indexes defined on `authTables`.
@@ -116,13 +113,11 @@ export default defineSchema({
   tag_catalog: tag_catalog_schema,
   hop_catalog: hop_catalog_schema,
 
-  // project
-  // user_project: projectSchema,
+  // graph
+  graph: graph_schema.index("by_owner", ["owner_id", "graph_type"]),
+  node: node_schema.index("by_graph", ["graph_id"]),
 
-  // note
-  note: note_schema,
-
-  // brew_journal
-  brew_journal: brew_journal_schema,
-  brew_journal_entry: brew_journal_entry_schema,
+  // recipe
+  recipe_tree: recipe_tree_schema.index("by_owner", ["owner_id"]),
+  recipe: recipe_schema.index("by_owner", ["owner_id"]),
 });
