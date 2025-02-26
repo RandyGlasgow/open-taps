@@ -11,7 +11,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { api } from "@/convex/_generated/api";
-import { Doc } from "@/convex/_generated/dataModel";
+import { Doc, Id } from "@/convex/_generated/dataModel";
+import { useDebounceInterval, useTimeoutToggle } from "@/hooks/use-debounce";
 import dagre from "@dagrejs/dagre";
 import { TooltipArrow } from "@radix-ui/react-tooltip";
 import {
@@ -28,6 +29,7 @@ import {
   useEdgesState,
   useNodesState,
   useReactFlow,
+  Viewport,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { useMutation } from "convex/react";
@@ -93,10 +95,20 @@ export const GraphDisplay = ({ graph }: { graph: Doc<"graph"> }) => {
   const createNode = useMutation(api.recipe.createRecipe);
   const updateGraph = useMutation(api.graph.updateGraph);
   const rf = useReactFlow();
+  const [isSaving, toggleIsSaving] = useTimeoutToggle(false, "2s");
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [viewport, setViewport] = useState(initialViewport);
+
+  const update = useCallback(
+    () =>
+      updateGraph({
+        id: graph._id,
+        json_graph: JSON.stringify({ nodes, edges, viewport }),
+      }).then(() => toggleIsSaving()),
+    [updateGraph, graph._id, nodes, edges, viewport, toggleIsSaving],
+  );
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const onConnect = useCallback((params: any) => rf.addEdges([params]), [rf]);
@@ -144,21 +156,23 @@ export const GraphDisplay = ({ graph }: { graph: Doc<"graph"> }) => {
             edges: [...rf.getEdges(), newEdge],
           };
 
-          await updateGraph({
+          updateGraph({
             id: graph._id,
             json_graph: JSON.stringify({
               ...parseGraph(graph),
               nodes: newNodes,
               edges: newEdges,
             }),
-          });
+          }).then(() => toggleIsSaving());
           setNodes(newNodes);
           setEdges(newEdges);
         }
       })();
     },
-    [createNode, graph, rf, setEdges, setNodes, updateGraph],
+    [createNode, graph, rf, setEdges, setNodes, updateGraph, toggleIsSaving],
   );
+
+  useDebounceInterval(update, "10m");
 
   return (
     <ReactFlow
@@ -172,7 +186,28 @@ export const GraphDisplay = ({ graph }: { graph: Doc<"graph"> }) => {
       viewport={viewport}
       onViewportChange={setViewport}
     >
-      <GraphMenuBar graph={graph} />
+      <Panel position="top-right">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              onClick={update}
+              className="h-2.5 w-2.5 bg-green-500 rounded-full animate-pulse data-[saving=false]:animate-none"
+              data-saving={isSaving}
+            ></button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <TooltipArrow />
+            <p>{isSaving ? "Saving..." : "Connected"}</p>
+          </TooltipContent>
+        </Tooltip>
+      </Panel>
+      <GraphMenuBar
+        graphId={graph._id}
+        nodes={nodes}
+        edges={edges}
+        viewport={viewport}
+      />
       <MemoizedMiniMap />
       <MemoizedControls />
       <MemoizedBackground />
@@ -180,24 +215,32 @@ export const GraphDisplay = ({ graph }: { graph: Doc<"graph"> }) => {
   );
 };
 
-const GraphMenuBar = ({ graph }: { graph: Doc<"graph"> }) => {
-  const { getNodes, getEdges, setNodes, setEdges, getViewport, addNodes } =
-    useReactFlow();
-
+const GraphMenuBar = ({
+  graphId,
+  nodes,
+  edges,
+  viewport,
+}: {
+  graphId: Id<"graph">;
+  nodes: Node[];
+  edges: Edge[];
+  viewport: Viewport;
+}) => {
+  const { getNodes, setNodes, addNodes, setEdges } = useReactFlow();
   const updateGraph = useMutation(api.graph.updateGraph);
   const createNode = useMutation(api.recipe.createRecipe);
 
   const hasRootNode = useMemo(
-    () => getNodes().some((n) => n.type === "root_recipe_node"),
-    [getNodes()],
+    () => nodes.some((n) => n.type === "root_recipe_node"),
+    [nodes],
   );
   const update = useCallback(
     (json: ReactFlowJsonObject) =>
-      updateGraph({ id: graph._id, json_graph: JSON.stringify(json) }),
-    [updateGraph, graph],
+      updateGraph({ id: graphId, json_graph: JSON.stringify(json) }),
+    [updateGraph, graphId],
   );
   const handleAddNode = useCallback(async () => {
-    const nodeId = await createNode({ graphId: graph._id });
+    const nodeId = await createNode({ graphId });
     const nodes = getNodes();
     const newNode = {
       id: nodeId,
@@ -206,7 +249,7 @@ const GraphMenuBar = ({ graph }: { graph: Doc<"graph"> }) => {
       data: { node_id: nodeId },
     };
     addNodes([newNode]);
-  }, [createNode, graph._id, getNodes, addNodes]);
+  }, [createNode, graphId, getNodes, addNodes]);
 
   return (
     <Panel>
@@ -246,7 +289,9 @@ const GraphMenuBar = ({ graph }: { graph: Doc<"graph"> }) => {
         <MenubarMenu>
           <MenubarTrigger>File</MenubarTrigger>
           <MenubarContent>
-            <MenubarItem>Save</MenubarItem>
+            <MenubarItem onClick={() => update({ nodes, edges, viewport })}>
+              Save
+            </MenubarItem>
           </MenubarContent>
         </MenubarMenu>
         <MenubarMenu>
@@ -254,42 +299,42 @@ const GraphMenuBar = ({ graph }: { graph: Doc<"graph"> }) => {
           <MenubarContent>
             <MenubarItem
               onClick={() => {
-                const { nodes, edges } = getLayoutElements(
-                  getNodes(),
-                  getEdges(),
+                const { nodes: newNodes, edges: newEdges } = getLayoutElements(
+                  nodes,
+                  edges,
                   1,
                 );
-                setNodes(nodes);
-                setEdges(edges);
-                update({ nodes, edges, viewport: getViewport() });
+                setNodes(newNodes);
+                setEdges(newEdges);
+                update({ nodes: newNodes, edges: newEdges, viewport });
               }}
             >
               Dense
             </MenubarItem>
             <MenubarItem
               onClick={() => {
-                const { nodes, edges } = getLayoutElements(
-                  getNodes(),
-                  getEdges(),
+                const { nodes: newNodes, edges: newEdges } = getLayoutElements(
+                  nodes,
+                  edges,
                   1.5,
                 );
-                setNodes(nodes);
-                setEdges(edges);
-                update({ nodes, edges, viewport: getViewport() });
+                setNodes(newNodes);
+                setEdges(newEdges);
+                update({ nodes: newNodes, edges: newEdges, viewport });
               }}
             >
               Balanced
             </MenubarItem>
             <MenubarItem
               onClick={() => {
-                const { nodes, edges } = getLayoutElements(
-                  getNodes(),
-                  getEdges(),
+                const { nodes: newNodes, edges: newEdges } = getLayoutElements(
+                  nodes,
+                  edges,
                   2,
                 );
-                setNodes(nodes);
-                setEdges(edges);
-                update({ nodes, edges, viewport: getViewport() });
+                setNodes(newNodes);
+                setEdges(newEdges);
+                update({ nodes: newNodes, edges: newEdges, viewport });
               }}
             >
               Spacious
@@ -303,13 +348,6 @@ const GraphMenuBar = ({ graph }: { graph: Doc<"graph"> }) => {
 
 const MemoizedBackground = memo(() => <Background />);
 MemoizedBackground.displayName = "Background";
-
-const MemoizedGraphMenuBar = memo(
-  ({ graph }: { graph: Doc<"graph"> }) => <GraphMenuBar graph={graph} />,
-  (prevProps, nextProps) =>
-    prevProps.graph.json_graph === nextProps.graph.json_graph,
-);
-MemoizedGraphMenuBar.displayName = "GraphMenuBar";
 
 const MemoizedMiniMap = memo(() => <MiniMap />);
 MemoizedMiniMap.displayName = "MiniMap";

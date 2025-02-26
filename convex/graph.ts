@@ -31,8 +31,6 @@ export const updateGraph = mutation({
     json_graph: v.string(),
   },
   handler: async (ctx, args) => {
-    console.log("updating graph");
-    console.log(args);
     const userId = await getAuthUserId(ctx);
     if (!userId) {
       throw new Error("Unauthorized");

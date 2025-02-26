@@ -49,7 +49,7 @@ export function NavBrewLogs() {
             <Skeleton className="h-10 w-full" />
           ) : (
             recipeTrees.map((item) => (
-              <SidebarMenuItem key={item.name}>
+              <SidebarMenuItem key={item._id}>
                 <SidebarMenuButton
                   asChild
                   className={cn(

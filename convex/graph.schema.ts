@@ -6,6 +6,8 @@ export const graph_schema = defineTable({
   updated_at: v.number(),
   graph_type: v.union(v.literal("recipe_tree")), // Recipe Tree
   json_graph: v.string(),
+
+  associated_nodes: v.array(v.id("node")),
 });
 
 export const node_schema = defineTable({

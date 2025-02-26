@@ -1,5 +1,6 @@
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { v } from "convex/values";
+import { createRecipeGraph } from "../lib/graph";
 import { mutation, query } from "./_generated/server";
 
 export const getAllRecipeTrees = query({
@@ -69,6 +70,7 @@ export const createRecipeTree = mutation({
     }
 
     const date = Date.now();
+
     const graphId = await ctx.db.insert("graph", {
       owner_id: userId,
       graph_type: "recipe_tree",
@@ -76,12 +78,33 @@ export const createRecipeTree = mutation({
         nodes: [],
         edges: [],
         viewport: {
-          x: 0,
-          y: 0,
+          x: 50,
+          y: 50,
           zoom: 1,
         },
       }),
+      associated_nodes: [],
       updated_at: date,
+    });
+
+    const recipeId = await ctx.db.insert("recipe", {
+      name: args.name,
+      owner_id: userId,
+      updated_at: date,
+      version: "v1",
+    });
+
+    // create the first node
+    const nodeId = await ctx.db.insert("node", {
+      type: "recipe_tree_node",
+      graph_id: graphId,
+      associated_entity_id: recipeId,
+    });
+
+    // update the graph with the node
+    await ctx.db.patch(graphId, {
+      json_graph: createRecipeGraph(nodeId),
+      associated_nodes: [nodeId],
     });
 
     return await ctx.db.insert("recipe_tree", {
@@ -105,7 +128,7 @@ export const createRecipe = mutation({
       throw new Error("Unauthorized");
     }
 
-    const recipeTreeId = await ctx.db.insert("recipe", {
+    const recipeId = await ctx.db.insert("recipe", {
       name: "New Recipe",
       owner_id: userId,
       updated_at: Date.now(),
@@ -115,9 +138,10 @@ export const createRecipe = mutation({
     const nodeId = await ctx.db.insert("node", {
       type: "recipe_tree_node",
       graph_id: args.graphId,
-      associated_entity_id: recipeTreeId,
+      associated_entity_id: recipeId,
     });
 
+    await ctx.db.patch(args.graphId, { associated_nodes: [nodeId] });
     return nodeId;
   },
 });
