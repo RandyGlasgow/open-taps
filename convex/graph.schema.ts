@@ -10,6 +10,6 @@ export const graph_schema = defineTable({
 
 export const node_schema = defineTable({
   graph_id: v.id("graph"),
-  associated_entity_id: v.union(v.string()), // available doc
+  associated_entity_id: v.union(v.id("recipe")), // available doc
   type: v.union(v.literal("recipe_tree_node"), v.literal("root_recipe_node")),
 });

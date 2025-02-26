@@ -67,7 +67,7 @@ export const createNode = mutation({
       name: "New Recipe",
       owner_id: userId,
       updated_at: Date.now(),
-      version: 1,
+      version: "1",
     });
 
     const nodeId = await ctx.db.insert("node", {
@@ -77,5 +77,35 @@ export const createNode = mutation({
     });
 
     return nodeId;
+  },
+});
+
+export const deleteNode = mutation({
+  args: { id: v.id("node") },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      throw new Error("Unauthorized");
+    }
+
+    const node = await ctx.db.get(args.id);
+    if (!node) {
+      throw new Error("Node not found");
+    }
+
+    const graph = await ctx.db.get(node.graph_id);
+    if (!graph) {
+      throw new Error("Graph not found");
+    }
+
+    if (graph.owner_id !== userId) {
+      throw new Error("Unauthorized");
+    }
+
+    // delete the node && associated entity
+    await Promise.all([
+      ctx.db.delete(args.id),
+      ctx.db.delete(node.associated_entity_id),
+    ]);
   },
 });

@@ -36,43 +36,35 @@ const parseGraph = (graph?: Doc<"graph"> | "loading") => {
   return JSON.parse(graph.json_graph) as ReactFlowJsonObject;
 };
 
-const dagreGraph = new dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}));
+const dg = new dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}));
 
-const getLayoutedElements = (
+const getLayoutElements = (
   nodes: Node[],
   edges: Edge[],
-  direction = "TB",
+  scaling: number = 1,
 ) => {
-  const nodeWidth = 160;
-  const nodeHeight = 160;
-  const isHorizontal = direction === "LR";
-  dagreGraph.setGraph({ rankdir: "TB" });
+  // Define a scaling factor to control the distance between nodes
 
-  nodes.forEach((node) => {
-    dagreGraph.setNode(node.id, { width: nodeWidth, height: nodeHeight });
-  });
+  dg.setGraph({ rankdir: "TB" });
+
+  // We need to use the node type to infer dimensions since we can't directly measure DOM elements
+  // during this calculation phase
+  const getScaledDimensions = (node: Node) => {
+    const { width = 160, height = 160 } = node.measured ?? {};
+    return { width: width * scaling, height: height * scaling };
+  };
+  nodes.forEach((n) => dg.setNode(n.id, getScaledDimensions(n)));
 
   edges.forEach((edge) => {
-    dagreGraph.setEdge(edge.source, edge.target);
+    dg.setEdge(edge.source, edge.target);
   });
 
-  dagre.layout(dagreGraph);
+  dagre.layout(dg);
 
   const newNodes = nodes.map((node) => {
-    const nodeWithPosition = dagreGraph.node(node.id);
-    const newNode = {
-      ...node,
-      targetPosition: isHorizontal ? "left" : "top",
-      sourcePosition: isHorizontal ? "right" : "bottom",
-      // We are shifting the dagre node position (anchor=center center) to the top left
-      // so it matches the React Flow node anchor point (top left).
-      position: {
-        x: nodeWithPosition.x - nodeWidth / 2,
-        y: nodeWithPosition.y - nodeHeight / 2,
-      },
-    };
-
-    return newNode;
+    const { x, y } = dg.node(node.id);
+    const { width = 160, height = 160 } = node.measured ?? {};
+    return { ...node, position: { x: x - width / 2, y: y - height / 2 } };
   });
 
   return { nodes: newNodes as Node[], edges };
@@ -83,11 +75,9 @@ export const GraphDisplay = ({ graph }: { graph: Doc<"graph"> }) => {
     nodes: initialNodes,
     edges: initialEdges,
     viewport: initialViewport,
-  } = useMemo(() => {
-    return parseGraph(graph);
-  }, [graph]);
+  } = useMemo(() => parseGraph(graph), [graph]);
 
-  const createNode = useMutation(api.graph.createNode);
+  const createNode = useMutation(api.recipe.createRecipe);
   const updateGraph = useMutation(api.graph.updateGraph);
   const rf = useReactFlow();
 
@@ -101,18 +91,22 @@ export const GraphDisplay = ({ graph }: { graph: Doc<"graph"> }) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (event: any, connectionState: any) => {
       (async () => {
-        const nodeId = await createNode({ graphId: graph._id });
+        const nodeId = await createNode({
+          graphId: graph._id,
+          version: ``,
+        });
         // when a connection is dropped on the pane it's not valid
         if (!connectionState.isValid) {
           // we need to remove the wrapper bounds, in order to get the correct position
-          const id = getRandomId();
           const { clientX, clientY } =
             "changedTouches" in event ? event.changedTouches[0] : event;
+          const randomX = Math.random() * 200;
+          const posOrNeg = Math.random() > 0.5 ? randomX : -randomX;
           const newNode = {
             id: nodeId,
             position: rf.screenToFlowPosition({
-              x: clientX,
-              y: clientY,
+              x: clientX + posOrNeg,
+              y: clientY + 50,
             }),
             type: "recipe_tree_node",
             data: { label: `Node ${nodeId}` },
@@ -120,7 +114,7 @@ export const GraphDisplay = ({ graph }: { graph: Doc<"graph"> }) => {
           } satisfies Node;
 
           const newEdge = {
-            id,
+            id: getRandomId(),
             source: connectionState.fromNode.id,
             target: nodeId,
             type: ConnectionLineType.SmoothStep,
@@ -132,8 +126,10 @@ export const GraphDisplay = ({ graph }: { graph: Doc<"graph"> }) => {
           } satisfies Edge;
 
           // intercept the node creation and add it to the graph json
-          const newNodes = [...rf.getNodes(), newNode];
-          const newEdges = [...rf.getEdges(), newEdge];
+          const { nodes: newNodes, edges: newEdges } = {
+            nodes: [...rf.getNodes(), newNode],
+            edges: [...rf.getEdges(), newEdge],
+          };
 
           await updateGraph({
             id: graph._id,
@@ -150,12 +146,23 @@ export const GraphDisplay = ({ graph }: { graph: Doc<"graph"> }) => {
     },
     [createNode, graph, rf, setEdges, setNodes, updateGraph],
   );
+  const handleAddNode = async () => {
+    const nodeId = await createNode({ graphId: graph._id });
+    rf.addNodes([
+      {
+        id: nodeId,
+        type: nodes.length === 0 ? "root_recipe_node" : "recipe_tree_node",
+        position: { x: 0, y: 0 },
+        data: { node_id: nodeId },
+      },
+    ]);
+  };
+  const update = (json: ReactFlowJsonObject) =>
+    updateGraph({ id: graph._id, json_graph: JSON.stringify(json) });
 
   return (
     <ReactFlow
       nodeTypes={NodeTypes}
-      snapToGrid
-      snapGrid={[10, 10]}
       nodes={nodes}
       edges={edges}
       onNodesChange={onNodesChange}
@@ -166,47 +173,14 @@ export const GraphDisplay = ({ graph }: { graph: Doc<"graph"> }) => {
       onViewportChange={setViewport}
     >
       <Panel>
-        <Button
-          onClick={() =>
-            rf.addNodes([
-              {
-                id: getRandomId(),
-                type:
-                  rf.getNodes().length === 0
-                    ? "root_recipe_node"
-                    : "recipe_tree_node",
-                position: { x: 0, y: 0 },
-                data: { node_id: getRandomId() },
-              },
-            ])
-          }
-        >
-          Add Node
-        </Button>
+        <Button onClick={handleAddNode}>Add Node</Button>
+        <Button onClick={() => update(rf.toObject())}>Save Graph</Button>
         <Button
           onClick={() => {
-            updateGraph({
-              id: graph._id,
-              json_graph: JSON.stringify({ nodes, edges }),
-            });
-          }}
-        >
-          Save Graph
-        </Button>
-        <Button
-          onClick={() => {
-            const { nodes: layoutedNodes, edges: layoutedEdges } =
-              getLayoutedElements(nodes, edges);
-            setNodes(layoutedNodes);
-            setEdges(layoutedEdges);
-            updateGraph({
-              id: graph._id,
-              json_graph: JSON.stringify({
-                nodes: layoutedNodes,
-                edges: layoutedEdges,
-                viewport: rf.getViewport(),
-              }),
-            });
+            const { nodes: n, edges: e } = getLayoutElements(nodes, edges, 1.5);
+            setNodes(n);
+            setEdges(e);
+            update({ nodes: n, edges: e, viewport: rf.getViewport() });
           }}
         >
           Organize

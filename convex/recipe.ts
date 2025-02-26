@@ -36,11 +36,25 @@ export const getRecipeTree = query({
 });
 
 export const getRecipe = query({
-  args: {
-    treeId: v.id("recipe_tree"),
-    recipeId: v.id("recipe"),
+  args: { nodeId: v.id("node") },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      throw new Error("Unauthorized");
+    }
+    const node = await ctx.db.get(args.nodeId);
+    if (!node) {
+      throw new Error("Node not found");
+    }
+    if (node.type !== "recipe_tree_node") {
+      throw new Error("Node is not a recipe tree node");
+    }
+    const recipe = await ctx.db.get(node.associated_entity_id);
+    if (!recipe) {
+      throw new Error("Recipe not found");
+    }
+    return recipe;
   },
-  handler: async (ctx, args) => {},
 });
 
 export const createRecipeTree = mutation({
@@ -77,6 +91,34 @@ export const createRecipeTree = mutation({
       name: args.name,
       description: args.description,
     });
+  },
+});
+
+export const createRecipe = mutation({
+  args: {
+    graphId: v.id("graph"),
+    version: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      throw new Error("Unauthorized");
+    }
+
+    const recipeTreeId = await ctx.db.insert("recipe", {
+      name: "New Recipe",
+      owner_id: userId,
+      updated_at: Date.now(),
+      version: args.version ?? "1",
+    });
+
+    const nodeId = await ctx.db.insert("node", {
+      type: "recipe_tree_node",
+      graph_id: args.graphId,
+      associated_entity_id: recipeTreeId,
+    });
+
+    return nodeId;
   },
 });
 

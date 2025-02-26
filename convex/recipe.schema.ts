@@ -12,6 +12,6 @@ export const recipe_tree_schema = defineTable({
 export const recipe_schema = defineTable({
   owner_id: v.id("users"),
   name: v.string(),
-  version: v.number(),
+  version: v.string(),
   updated_at: v.number(),
 });
