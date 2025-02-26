@@ -1,7 +1,19 @@
-import { Button } from "@/components/ui/button";
+import {
+  Menubar,
+  MenubarContent,
+  MenubarItem,
+  MenubarMenu,
+  MenubarTrigger,
+} from "@/components/ui/menubar";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { api } from "@/convex/_generated/api";
 import { Doc } from "@/convex/_generated/dataModel";
 import dagre from "@dagrejs/dagre";
+import { TooltipArrow } from "@radix-ui/react-tooltip";
 import {
   Background,
   ConnectionLineType,
@@ -19,7 +31,8 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { useMutation } from "convex/react";
-import { useCallback, useMemo, useState } from "react";
+import { Plus } from "lucide-react";
+import { memo, useCallback, useMemo, useState } from "react";
 import { RecipeNode, RootRecipeNode } from "./recipe-node";
 
 const NodeTypes = {
@@ -146,19 +159,6 @@ export const GraphDisplay = ({ graph }: { graph: Doc<"graph"> }) => {
     },
     [createNode, graph, rf, setEdges, setNodes, updateGraph],
   );
-  const handleAddNode = async () => {
-    const nodeId = await createNode({ graphId: graph._id });
-    rf.addNodes([
-      {
-        id: nodeId,
-        type: nodes.length === 0 ? "root_recipe_node" : "recipe_tree_node",
-        position: { x: 0, y: 0 },
-        data: { node_id: nodeId },
-      },
-    ]);
-  };
-  const update = (json: ReactFlowJsonObject) =>
-    updateGraph({ id: graph._id, json_graph: JSON.stringify(json) });
 
   return (
     <ReactFlow
@@ -172,23 +172,147 @@ export const GraphDisplay = ({ graph }: { graph: Doc<"graph"> }) => {
       viewport={viewport}
       onViewportChange={setViewport}
     >
-      <Panel>
-        <Button onClick={handleAddNode}>Add Node</Button>
-        <Button onClick={() => update(rf.toObject())}>Save Graph</Button>
-        <Button
-          onClick={() => {
-            const { nodes: n, edges: e } = getLayoutElements(nodes, edges, 1.5);
-            setNodes(n);
-            setEdges(e);
-            update({ nodes: n, edges: e, viewport: rf.getViewport() });
-          }}
-        >
-          Organize
-        </Button>
-      </Panel>
-      <MiniMap />
-      <Controls />
-      <Background />
+      <GraphMenuBar graph={graph} />
+      <MemoizedMiniMap />
+      <MemoizedControls />
+      <MemoizedBackground />
     </ReactFlow>
   );
 };
+
+const GraphMenuBar = ({ graph }: { graph: Doc<"graph"> }) => {
+  const { getNodes, getEdges, setNodes, setEdges, getViewport, addNodes } =
+    useReactFlow();
+
+  const updateGraph = useMutation(api.graph.updateGraph);
+  const createNode = useMutation(api.recipe.createRecipe);
+
+  const hasRootNode = useMemo(
+    () => getNodes().some((n) => n.type === "root_recipe_node"),
+    [getNodes()],
+  );
+  const update = useCallback(
+    (json: ReactFlowJsonObject) =>
+      updateGraph({ id: graph._id, json_graph: JSON.stringify(json) }),
+    [updateGraph, graph],
+  );
+  const handleAddNode = useCallback(async () => {
+    const nodeId = await createNode({ graphId: graph._id });
+    const nodes = getNodes();
+    const newNode = {
+      id: nodeId,
+      type: nodes.length === 0 ? "root_recipe_node" : "recipe_tree_node",
+      position: { x: 0, y: 0 },
+      data: { node_id: nodeId },
+    };
+    addNodes([newNode]);
+  }, [createNode, graph._id, getNodes, addNodes]);
+
+  return (
+    <Panel>
+      <Menubar>
+        <MenubarMenu>
+          <MenubarTrigger>Edit</MenubarTrigger>
+          <MenubarContent>
+            <Tooltip>
+              <TooltipTrigger
+                className="w-full disabled:cursor-not-allowed"
+                disabled={hasRootNode}
+              >
+                <MenubarItem
+                  className="flex items-center gap-2 justify-between"
+                  disabled={hasRootNode}
+                  onClick={handleAddNode}
+                >
+                  Root Recipe
+                  <Plus className="h-4 w-4" />
+                </MenubarItem>
+              </TooltipTrigger>
+              <TooltipContent>
+                <TooltipArrow />
+                {hasRootNode ? (
+                  <p>
+                    <strong>Hmmm...</strong>
+                    <br /> It seems you already have a root recipe.
+                  </p>
+                ) : (
+                  <p>Add a root recipe to the recipe tree.</p>
+                )}
+              </TooltipContent>
+            </Tooltip>
+            <MenubarItem>Add Recipe</MenubarItem>
+          </MenubarContent>
+        </MenubarMenu>
+        <MenubarMenu>
+          <MenubarTrigger>File</MenubarTrigger>
+          <MenubarContent>
+            <MenubarItem>Save</MenubarItem>
+          </MenubarContent>
+        </MenubarMenu>
+        <MenubarMenu>
+          <MenubarTrigger>Organize</MenubarTrigger>
+          <MenubarContent>
+            <MenubarItem
+              onClick={() => {
+                const { nodes, edges } = getLayoutElements(
+                  getNodes(),
+                  getEdges(),
+                  1,
+                );
+                setNodes(nodes);
+                setEdges(edges);
+                update({ nodes, edges, viewport: getViewport() });
+              }}
+            >
+              Dense
+            </MenubarItem>
+            <MenubarItem
+              onClick={() => {
+                const { nodes, edges } = getLayoutElements(
+                  getNodes(),
+                  getEdges(),
+                  1.5,
+                );
+                setNodes(nodes);
+                setEdges(edges);
+                update({ nodes, edges, viewport: getViewport() });
+              }}
+            >
+              Balanced
+            </MenubarItem>
+            <MenubarItem
+              onClick={() => {
+                const { nodes, edges } = getLayoutElements(
+                  getNodes(),
+                  getEdges(),
+                  2,
+                );
+                setNodes(nodes);
+                setEdges(edges);
+                update({ nodes, edges, viewport: getViewport() });
+              }}
+            >
+              Spacious
+            </MenubarItem>
+          </MenubarContent>
+        </MenubarMenu>
+      </Menubar>
+    </Panel>
+  );
+};
+
+const MemoizedBackground = memo(() => <Background />);
+MemoizedBackground.displayName = "Background";
+
+const MemoizedGraphMenuBar = memo(
+  ({ graph }: { graph: Doc<"graph"> }) => <GraphMenuBar graph={graph} />,
+  (prevProps, nextProps) =>
+    prevProps.graph.json_graph === nextProps.graph.json_graph,
+);
+MemoizedGraphMenuBar.displayName = "GraphMenuBar";
+
+const MemoizedMiniMap = memo(() => <MiniMap />);
+MemoizedMiniMap.displayName = "MiniMap";
+
+const MemoizedControls = memo(() => <Controls />);
+MemoizedControls.displayName = "Controls";
