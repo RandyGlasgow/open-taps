@@ -1,15 +1,15 @@
 "use client";
 
 import { LoginForm } from "@/components/login-form";
+import { useRoute } from "@/constants/routes";
 import { useAuthActions } from "@convex-dev/auth/react";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export default function SignIn() {
   const { signIn } = useAuthActions();
   const [flow, setFlow] = useState<"signIn" | "signUp">("signIn");
   const [error, setError] = useState<string | null>(null);
-  const router = useRouter();
+  const router = useRoute();
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.target as HTMLFormElement);
@@ -19,7 +19,7 @@ export default function SignIn() {
         setError(error.message);
       })
       .then(() => {
-        router.push("/dashboard");
+        router.push("/dashboard/brew-lab");
       });
   };
   return (

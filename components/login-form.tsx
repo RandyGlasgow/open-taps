@@ -1,5 +1,4 @@
 "use client";
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -10,10 +9,11 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useRoute } from "@/constants/routes";
+import { cn } from "@/lib/utils";
+import { useAuthActions } from "@convex-dev/auth/react";
 import Link from "next/link";
 import { useState } from "react";
-import { useAuthActions } from "@convex-dev/auth/react";
-import { useRouter } from "next/navigation";
 
 export function LoginForm({
   className,
@@ -22,7 +22,7 @@ export function LoginForm({
   const { signIn } = useAuthActions();
   const [flow] = useState<"signIn" | "signUp">("signIn");
   const [, setError] = useState<string | null>(null);
-  const router = useRouter();
+  const router = useRoute();
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.target as HTMLFormElement);
@@ -32,7 +32,7 @@ export function LoginForm({
         setError(error.message);
       })
       .then(() => {
-        router.push("/");
+        router.push("/dashboard/brew-lab");
       });
   };
   return (

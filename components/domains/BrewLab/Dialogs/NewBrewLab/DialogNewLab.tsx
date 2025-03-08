@@ -10,14 +10,6 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Tooltip,
@@ -25,22 +17,25 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { api } from "@/convex/_generated/api";
+import { Id } from "@/convex/_generated/dataModel";
 import { TooltipArrow } from "@radix-ui/react-tooltip";
-import { useMutation, useQuery } from "convex/react";
+import { useMutation } from "convex/react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
-
-export function CreateProjectDialog({ trigger }: { trigger: React.ReactNode }) {
+import * as React from "react";
+import { PropsWithChildren, useState } from "react";
+import { BeerStyleCombobox } from "./BeerStyleCombobox";
+export function DialogNewRecipe({ children }: PropsWithChildren) {
   const [open, setOpen] = useState(false);
 
-  const beerStyles = useQuery(api.beer_styles.getBeerStyles) || "loading";
-  const postProject = useMutation(api.recipe.createRecipeTree);
+  const postProject = useMutation(api.brew_lab.createBrewLab);
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.target as HTMLFormElement);
     const data = Object.fromEntries(formData);
+
+    console.log({ data });
 
     // verify that the name is not empty
     if (!data.name) {
@@ -50,10 +45,12 @@ export function CreateProjectDialog({ trigger }: { trigger: React.ReactNode }) {
 
     const recipeTreeId = await postProject({
       description: String(`${data.idea}`),
+      style: String(data.style) as Id<"beer_style_catalog">,
       name: String(`${data.name}`),
     });
+
     if (recipeTreeId) {
-      router.push(`/dashboard/recipes/${recipeTreeId}`);
+      router.push(`/dashboard/brew-lab/${recipeTreeId}`);
     }
     setOpen(false);
   };
@@ -62,7 +59,7 @@ export function CreateProjectDialog({ trigger }: { trigger: React.ReactNode }) {
     <Dialog open={open} onOpenChange={setOpen}>
       <Tooltip>
         <TooltipTrigger asChild>
-          <DialogTrigger asChild>{trigger}</DialogTrigger>
+          <DialogTrigger asChild>{children}</DialogTrigger>
         </TooltipTrigger>
         <TooltipContent>
           <TooltipArrow />
@@ -70,8 +67,9 @@ export function CreateProjectDialog({ trigger }: { trigger: React.ReactNode }) {
         </TooltipContent>
       </Tooltip>
       <DialogContent>
-        <DialogTitle className="sr-only">Create Brew Project</DialogTitle>
-        <DialogHeader>Create Brew Log</DialogHeader>
+        <DialogHeader>
+          <DialogTitle>Create Brew Project</DialogTitle>
+        </DialogHeader>
         <DialogDescription asChild>
           <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
             <Label htmlFor="name">Name</Label>
@@ -81,23 +79,8 @@ export function CreateProjectDialog({ trigger }: { trigger: React.ReactNode }) {
               placeholder="Give this project a name"
             />
 
-            <Label htmlFor="beer_style">Style</Label>
-            <Select name="beer_style" onValueChange={console.log}>
-              <SelectTrigger id="beer_style">
-                <SelectValue placeholder="What are you brewing?" />
-              </SelectTrigger>
-              <SelectContent side="bottom" className="max-h-[250px]">
-                {beerStyles === "loading" ? (
-                  <Skeleton className="h-10 w-full" />
-                ) : (
-                  beerStyles?.map((s) => (
-                    <SelectItem key={s._id} value={s._id}>
-                      {s.display_name}
-                    </SelectItem>
-                  ))
-                )}
-              </SelectContent>
-            </Select>
+            <Label htmlFor="style">Style</Label>
+            <BeerStyleCombobox name="style" />
 
             <Label htmlFor="idea">Description</Label>
             <Textarea

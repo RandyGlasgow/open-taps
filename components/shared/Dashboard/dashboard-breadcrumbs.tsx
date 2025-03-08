@@ -9,7 +9,7 @@ import {
   BreadcrumbLink,
   BreadcrumbList,
   BreadcrumbSeparator,
-} from "../../../../components/ui/breadcrumb";
+} from "../../ui/breadcrumb";
 
 export const DashboardBreadcrumb = () => {
   const pathname = usePathname();

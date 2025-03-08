@@ -1,7 +1,7 @@
 "use client";
 
-import { NavBrewLogs } from "@/components/nav-brew-logs";
 import { NavUser } from "@/components/nav-user";
+import { NavBrewLogs } from "@/components/shared/Dashboard/nav-brew-logs";
 import {
   Sidebar,
   SidebarContent,

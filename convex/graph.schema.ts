@@ -4,7 +4,7 @@ import { v } from "convex/values";
 export const graph_schema = defineTable({
   owner_id: v.id("users"),
   updated_at: v.number(),
-  graph_type: v.union(v.literal("recipe_tree")), // Recipe Tree
+  graph_type: v.union(v.literal("recipe_tree"), v.literal("brew_lab")), // Recipe Tree
   json_graph: v.string(),
 
   associated_nodes: v.array(v.id("node")),
