@@ -5,7 +5,12 @@ export const recipe_schema = defineTable({
   name: v.string(),
   owner_id: v.id("users"),
   updated_at: v.number(),
-  version: v.string(),
+  version: v.object({
+    major: v.number(),
+    minor: v.number(),
+    patch: v.number(),
+  }),
+
   brew_lab_id: v.id("brew_lab"), // which brew lab the recipe belongs to
   description: v.optional(v.string()),
   batch_size: v.object({
@@ -32,4 +37,6 @@ export const recipe_schema = defineTable({
   ),
 
   ingredients: v.array(v.object({})),
-}).index("by_owner", ["owner_id"]);
+})
+  .index("by_owner", ["owner_id"])
+  .index("by_brew_lab", ["brew_lab_id"]);

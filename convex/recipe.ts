@@ -1,5 +1,7 @@
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { v } from "convex/values";
+import { getOrderedRecipes } from "../components/domains/BrewLab/utils";
+import { omitFromObject } from "./../lib/utils";
 import { mutation, query } from "./_generated/server";
 
 export const getById = query({
@@ -50,7 +52,11 @@ export const getAllRecipesByBrewLabId = query({
 export const createRecipe = mutation({
   args: {
     brewLabId: v.id("brew_lab"),
-    version: v.string(),
+    version: v.object({
+      major: v.number(),
+      minor: v.number(),
+      patch: v.number(),
+    }),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
@@ -68,7 +74,11 @@ export const createRecipe = mutation({
 
     const recipe = await ctx.db.insert("recipe", {
       name: brewLab.name,
-      version: args.version,
+      version: {
+        major: 1,
+        minor: 0,
+        patch: 0,
+      },
       owner_id: userId,
       brew_lab_id: args.brewLabId,
       updated_at: Date.now(),
@@ -91,5 +101,106 @@ export const createRecipe = mutation({
     });
 
     return recipe;
+  },
+});
+
+export const createNewVersion = mutation({
+  args: {
+    recipeId: v.id("recipe"),
+    type: v.union(v.literal("major"), v.literal("minor"), v.literal("patch")),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      throw new Error("Unauthorized");
+    }
+
+    const recipe = await ctx.db.get(args.recipeId);
+    if (!recipe) {
+      throw new Error("Recipe not found");
+    }
+
+    if (recipe.owner_id !== userId) {
+      throw new Error("Unauthorized");
+    }
+
+    const labId = recipe.brew_lab_id;
+
+    const found = await ctx.db.get(labId);
+    if (!found) {
+      throw new Error("Brew lab not found");
+    }
+
+    const allRecipes = await ctx.db
+      .query("recipe")
+      .withIndex("by_brew_lab", (q) => q.eq("brew_lab_id", labId))
+      .collect();
+
+    const { byVersion, groupedByVersion } = getOrderedRecipes(allRecipes);
+
+    // Calculate the new version based on type
+    let newVersion;
+    if (args.type === "major") {
+      // For major version, increment major and reset minor and patch to 0
+      newVersion = {
+        major: byVersion[0].version.major + 1,
+        minor: 0,
+        patch: 0,
+      };
+    } else if (args.type === "minor") {
+      // find the major version
+      const filteredByMajor = byVersion.filter(
+        (r) => r.version.major === recipe.version.major,
+      );
+      if (!filteredByMajor) {
+        throw new Error("Major version not found");
+      }
+      const highestMinor = filteredByMajor.reduce(
+        (highest, r) => Math.max(highest, r.version.minor),
+        recipe.version.minor,
+      );
+
+      newVersion = {
+        major: recipe.version.major,
+        minor: highestMinor + 1,
+        patch: 0,
+      };
+    } else {
+      // find the major version
+      const filteredByMajor = byVersion.filter(
+        (r) => r.version.major === recipe.version.major,
+      );
+      if (!filteredByMajor) {
+        throw new Error("Major version not found");
+      }
+      const highestPatch = filteredByMajor
+        .filter((r) => r.version.minor === recipe.version.minor)
+        .reduce(
+          (highest, r) => Math.max(highest, r.version.patch),
+          recipe.version.patch,
+        );
+
+      newVersion = {
+        major: recipe.version.major,
+        minor: recipe.version.minor,
+        patch: highestPatch + 1,
+      };
+    }
+
+    await ctx.db.insert("recipe", {
+      ...omitFromObject(recipe, ["_id", "_creationTime"]),
+      name: recipe.name,
+      version: newVersion,
+      owner_id: userId,
+      brew_lab_id: labId,
+      updated_at: Date.now(),
+      style: recipe.style,
+    });
+
+    await ctx.db.patch(labId, {
+      associated_recipes: (found.associated_recipes || []).concat(
+        args.recipeId,
+      ),
+    });
   },
 });

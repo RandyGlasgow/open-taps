@@ -13,3 +13,38 @@ export const consolidateFunctions = (
     functions.forEach((fn) => fn(...args));
   };
 };
+
+export const pickFromObject = <
+  T extends Record<string, unknown>,
+  K extends keyof T,
+>(
+  obj: T,
+  keys: K[],
+) => {
+  return keys.reduce(
+    (acc, key) => {
+      acc[key] = obj[key];
+      return acc;
+    },
+    {} as Pick<T, K>,
+  );
+};
+
+export const omitFromObject = <
+  T extends Record<string, unknown>,
+  K extends keyof T,
+>(
+  obj: T,
+  keys: K[],
+) => {
+  return Object.keys(obj).reduce(
+    (acc, key) => {
+      if (!keys.includes(key as K)) {
+        // @ts-expect-error - this is safe because we know the key is not in the keys array
+        acc[key as keyof T] = obj[key as keyof T];
+      }
+      return acc;
+    },
+    {} as Omit<T, K>,
+  );
+};
