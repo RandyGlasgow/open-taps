@@ -133,10 +133,11 @@ export const createNewVersion = mutation({
 
     const allRecipes = await ctx.db
       .query("recipe")
-      .withIndex("by_brew_lab", (q) => q.eq("brew_lab_id", labId))
+      .withIndex("by_brew_lab_by_owner", (q) =>
+        q.eq("brew_lab_id", labId).eq("owner_id", userId),
+      )
       .collect();
-
-    const { byVersion, groupedByVersion } = getOrderedRecipes(allRecipes);
+    const { byVersion } = getOrderedRecipes(allRecipes);
 
     // Calculate the new version based on type
     let newVersion;
@@ -191,6 +192,213 @@ export const createNewVersion = mutation({
       ...omitFromObject(recipe, ["_id", "_creationTime"]),
       name: recipe.name,
       version: newVersion,
+      owner_id: userId,
+      brew_lab_id: labId,
+      updated_at: Date.now(),
+      style: recipe.style,
+    });
+
+    await ctx.db.patch(labId, {
+      associated_recipes: (found.associated_recipes || []).concat(
+        args.recipeId,
+      ),
+    });
+  },
+});
+
+export const createNewMajorVersion = mutation({
+  args: {
+    recipeId: v.id("recipe"),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      throw new Error("Unauthorized");
+    }
+
+    const recipe = await ctx.db.get(args.recipeId);
+    if (!recipe) {
+      throw new Error("Recipe not found");
+    }
+
+    if (recipe.owner_id !== userId) {
+      throw new Error("Unauthorized");
+    }
+
+    const labId = recipe.brew_lab_id;
+
+    const found = await ctx.db.get(labId);
+    if (!found) {
+      throw new Error("Brew lab not found");
+    }
+
+    const allRecipes = await ctx.db
+      .query("recipe")
+      .withIndex("by_brew_lab_by_owner", (q) =>
+        q.eq("brew_lab_id", labId).eq("owner_id", userId),
+      )
+      .collect();
+
+    const { byVersion } = getOrderedRecipes(allRecipes);
+
+    const newMajorVersion = {
+      major: byVersion[0].version.major + 1,
+      minor: 0,
+      patch: 0,
+    };
+
+    await ctx.db.insert("recipe", {
+      ...omitFromObject(recipe, ["_id", "_creationTime"]),
+      name: recipe.name,
+      version: newMajorVersion,
+      owner_id: userId,
+      brew_lab_id: labId,
+      updated_at: Date.now(),
+      style: recipe.style,
+    });
+
+    await ctx.db.patch(labId, {
+      associated_recipes: (found.associated_recipes || []).concat(
+        args.recipeId,
+      ),
+    });
+
+    return newMajorVersion;
+  },
+});
+
+export const createNewMinorVersion = mutation({
+  args: {
+    recipeId: v.id("recipe"),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      throw new Error("Unauthorized");
+    }
+
+    const recipe = await ctx.db.get(args.recipeId);
+    if (!recipe) {
+      throw new Error("Recipe not found");
+    }
+
+    if (recipe.owner_id !== userId) {
+      throw new Error("Unauthorized");
+    }
+
+    const labId = recipe.brew_lab_id;
+
+    const found = await ctx.db.get(labId);
+    if (!found) {
+      throw new Error("Brew lab not found");
+    }
+
+    const allRecipes = await ctx.db
+      .query("recipe")
+      .withIndex("by_brew_lab_by_owner", (q) =>
+        q.eq("brew_lab_id", labId).eq("owner_id", userId),
+      )
+      .collect();
+
+    const { byVersion } = getOrderedRecipes(allRecipes);
+
+    const filteredByMajor = byVersion.filter(
+      (r) => r.version.major === recipe.version.major,
+    );
+    if (!filteredByMajor) {
+      throw new Error("Major version not found");
+    }
+    const highestMinor = filteredByMajor.reduce(
+      (highest, r) => Math.max(highest, r.version.minor),
+      recipe.version.minor,
+    );
+
+    const newMinorVersion = {
+      major: recipe.version.major,
+      minor: highestMinor + 1,
+      patch: 0,
+    };
+
+    await ctx.db.insert("recipe", {
+      ...omitFromObject(recipe, ["_id", "_creationTime"]),
+      name: recipe.name,
+      version: newMinorVersion,
+      owner_id: userId,
+      brew_lab_id: labId,
+      updated_at: Date.now(),
+      style: recipe.style,
+    });
+
+    await ctx.db.patch(labId, {
+      associated_recipes: (found.associated_recipes || []).concat(
+        args.recipeId,
+      ),
+    });
+  },
+});
+
+export const createNewPatchVersion = mutation({
+  args: {
+    recipeId: v.id("recipe"),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      throw new Error("Unauthorized");
+    }
+
+    const recipe = await ctx.db.get(args.recipeId);
+    if (!recipe) {
+      throw new Error("Recipe not found");
+    }
+
+    if (recipe.owner_id !== userId) {
+      throw new Error("Unauthorized");
+    }
+
+    const labId = recipe.brew_lab_id;
+
+    const found = await ctx.db.get(labId);
+    if (!found) {
+      throw new Error("Brew lab not found");
+    }
+
+    const allRecipes = await ctx.db
+      .query("recipe")
+      .withIndex("by_brew_lab_by_owner", (q) =>
+        q.eq("brew_lab_id", labId).eq("owner_id", userId),
+      )
+      .collect();
+
+    const { byVersion } = getOrderedRecipes(allRecipes);
+
+    const filteredByMajor = byVersion.filter(
+      (r) => r.version.major === recipe.version.major,
+    );
+    if (!filteredByMajor) {
+      throw new Error("Major version not found");
+    }
+    const filteredByMinor = filteredByMajor.filter(
+      (r) => r.version.minor === recipe.version.minor,
+    );
+    if (!filteredByMinor) {
+      throw new Error("Minor version not found");
+    }
+    const highestPatch = filteredByMinor.reduce(
+      (highest, r) => Math.max(highest, r.version.patch),
+      recipe.version.patch,
+    );
+
+    const newPatchVersion = {
+      major: recipe.version.major,
+      minor: recipe.version.minor,
+      patch: highestPatch + 1,
+    };
+
+    await ctx.db.insert("recipe", {
+      ...omitFromObject(recipe, ["_id", "_creationTime"]),
+      name: recipe.name,
+      version: newPatchVersion,
       owner_id: userId,
       brew_lab_id: labId,
       updated_at: Date.now(),

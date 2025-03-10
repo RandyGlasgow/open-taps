@@ -21,7 +21,9 @@ export const RecipeVersionContextMenu = ({
   children,
   recipeId,
 }: PropsWithChildren<{ recipeId: Id<"recipe"> }>) => {
-  const createNewVersion = useMutation(api.recipe.createNewVersion);
+  const createNewMajorVersion = useMutation(api.recipe.createNewMajorVersion);
+  const createNewMinorVersion = useMutation(api.recipe.createNewMinorVersion);
+  const createNewPatchVersion = useMutation(api.recipe.createNewPatchVersion);
   return (
     <ContextMenu>
       <ContextMenuTrigger asChild>{children}</ContextMenuTrigger>
@@ -32,7 +34,7 @@ export const RecipeVersionContextMenu = ({
           <TooltipTrigger asChild>
             <ContextMenuItem
               className="flex items-center gap-2 justify-between group cursor-pointer"
-              onClick={() => createNewVersion({ recipeId, type: "major" })}
+              onClick={() => createNewMajorVersion({ recipeId })}
             >
               Recipe
               <VersioningIcon type="major" />
@@ -47,7 +49,7 @@ export const RecipeVersionContextMenu = ({
           <TooltipTrigger asChild>
             <ContextMenuItem
               className="flex items-center gap-2 justify-between group cursor-pointer"
-              onClick={() => createNewVersion({ recipeId, type: "minor" })}
+              onClick={() => createNewMinorVersion({ recipeId })}
             >
               Process
               <VersioningIcon type="minor" />
@@ -62,7 +64,7 @@ export const RecipeVersionContextMenu = ({
           <TooltipTrigger asChild>
             <ContextMenuItem
               className="flex items-center gap-2 justify-between group cursor-pointer"
-              onClick={() => createNewVersion({ recipeId, type: "patch" })}
+              onClick={() => createNewPatchVersion({ recipeId })}
             >
               Adjust
               <VersioningIcon type="patch" />
