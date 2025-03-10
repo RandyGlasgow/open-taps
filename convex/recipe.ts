@@ -207,35 +207,23 @@ export const createNewVersion = mutation({
 });
 
 export const createNewMajorVersion = mutation({
-  args: {
-    recipeId: v.id("recipe"),
-  },
+  args: { recipeId: v.id("recipe") },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) {
-      throw new Error("Unauthorized");
-    }
+    const [userId, recipe] = await Promise.all([
+      getAuthUserId(ctx),
+      ctx.db.get(args.recipeId),
+    ]);
+    if (!userId) throw new Error("Unauthorized");
+    if (!recipe) throw new Error("Recipe not found");
+    if (recipe.owner_id !== userId) throw new Error("Unauthorized");
 
-    const recipe = await ctx.db.get(args.recipeId);
-    if (!recipe) {
-      throw new Error("Recipe not found");
-    }
-
-    if (recipe.owner_id !== userId) {
-      throw new Error("Unauthorized");
-    }
-
-    const labId = recipe.brew_lab_id;
-
-    const found = await ctx.db.get(labId);
-    if (!found) {
-      throw new Error("Brew lab not found");
-    }
+    const found = await ctx.db.get(recipe.brew_lab_id);
+    if (!found) throw new Error("Brew lab not found");
 
     const allRecipes = await ctx.db
       .query("recipe")
       .withIndex("by_brew_lab_by_owner", (q) =>
-        q.eq("brew_lab_id", labId).eq("owner_id", userId),
+        q.eq("brew_lab_id", recipe.brew_lab_id).eq("owner_id", userId),
       )
       .collect();
 
@@ -252,12 +240,12 @@ export const createNewMajorVersion = mutation({
       name: recipe.name,
       version: newMajorVersion,
       owner_id: userId,
-      brew_lab_id: labId,
+      brew_lab_id: recipe.brew_lab_id,
       updated_at: Date.now(),
       style: recipe.style,
     });
 
-    await ctx.db.patch(labId, {
+    await ctx.db.patch(recipe.brew_lab_id, {
       associated_recipes: (found.associated_recipes || []).concat(
         args.recipeId,
       ),
@@ -272,31 +260,21 @@ export const createNewMinorVersion = mutation({
     recipeId: v.id("recipe"),
   },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) {
-      throw new Error("Unauthorized");
-    }
+    const [userId, recipe] = await Promise.all([
+      getAuthUserId(ctx),
+      ctx.db.get(args.recipeId),
+    ]);
+    if (!userId) throw new Error("Unauthorized");
+    if (!recipe) throw new Error("Recipe not found");
+    if (recipe.owner_id !== userId) throw new Error("Unauthorized");
 
-    const recipe = await ctx.db.get(args.recipeId);
-    if (!recipe) {
-      throw new Error("Recipe not found");
-    }
-
-    if (recipe.owner_id !== userId) {
-      throw new Error("Unauthorized");
-    }
-
-    const labId = recipe.brew_lab_id;
-
-    const found = await ctx.db.get(labId);
-    if (!found) {
-      throw new Error("Brew lab not found");
-    }
+    const found = await ctx.db.get(recipe.brew_lab_id);
+    if (!found) throw new Error("Brew lab not found");
 
     const allRecipes = await ctx.db
       .query("recipe")
       .withIndex("by_brew_lab_by_owner", (q) =>
-        q.eq("brew_lab_id", labId).eq("owner_id", userId),
+        q.eq("brew_lab_id", recipe.brew_lab_id).eq("owner_id", userId),
       )
       .collect();
 
@@ -305,9 +283,7 @@ export const createNewMinorVersion = mutation({
     const filteredByMajor = byVersion.filter(
       (r) => r.version.major === recipe.version.major,
     );
-    if (!filteredByMajor) {
-      throw new Error("Major version not found");
-    }
+    if (!filteredByMajor) throw new Error("Major version not found");
     const highestMinor = filteredByMajor.reduce(
       (highest, r) => Math.max(highest, r.version.minor),
       recipe.version.minor,
@@ -324,12 +300,12 @@ export const createNewMinorVersion = mutation({
       name: recipe.name,
       version: newMinorVersion,
       owner_id: userId,
-      brew_lab_id: labId,
+      brew_lab_id: recipe.brew_lab_id,
       updated_at: Date.now(),
       style: recipe.style,
     });
 
-    await ctx.db.patch(labId, {
+    await ctx.db.patch(recipe.brew_lab_id, {
       associated_recipes: (found.associated_recipes || []).concat(
         args.recipeId,
       ),
@@ -338,35 +314,23 @@ export const createNewMinorVersion = mutation({
 });
 
 export const createNewPatchVersion = mutation({
-  args: {
-    recipeId: v.id("recipe"),
-  },
+  args: { recipeId: v.id("recipe") },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) {
-      throw new Error("Unauthorized");
-    }
+    const [userId, recipe] = await Promise.all([
+      getAuthUserId(ctx),
+      ctx.db.get(args.recipeId),
+    ]);
+    if (!userId) throw new Error("Unauthorized");
+    if (!recipe) throw new Error("Recipe not found");
+    if (recipe.owner_id !== userId) throw new Error("Unauthorized");
 
-    const recipe = await ctx.db.get(args.recipeId);
-    if (!recipe) {
-      throw new Error("Recipe not found");
-    }
-
-    if (recipe.owner_id !== userId) {
-      throw new Error("Unauthorized");
-    }
-
-    const labId = recipe.brew_lab_id;
-
-    const found = await ctx.db.get(labId);
-    if (!found) {
-      throw new Error("Brew lab not found");
-    }
+    const found = await ctx.db.get(recipe.brew_lab_id);
+    if (!found) throw new Error("Brew lab not found");
 
     const allRecipes = await ctx.db
       .query("recipe")
       .withIndex("by_brew_lab_by_owner", (q) =>
-        q.eq("brew_lab_id", labId).eq("owner_id", userId),
+        q.eq("brew_lab_id", recipe.brew_lab_id).eq("owner_id", userId),
       )
       .collect();
 
@@ -375,15 +339,11 @@ export const createNewPatchVersion = mutation({
     const filteredByMajor = byVersion.filter(
       (r) => r.version.major === recipe.version.major,
     );
-    if (!filteredByMajor) {
-      throw new Error("Major version not found");
-    }
+    if (!filteredByMajor) throw new Error("Major version not found");
     const filteredByMinor = filteredByMajor.filter(
       (r) => r.version.minor === recipe.version.minor,
     );
-    if (!filteredByMinor) {
-      throw new Error("Minor version not found");
-    }
+    if (!filteredByMinor) throw new Error("Minor version not found");
     const highestPatch = filteredByMinor.reduce(
       (highest, r) => Math.max(highest, r.version.patch),
       recipe.version.patch,
@@ -400,12 +360,12 @@ export const createNewPatchVersion = mutation({
       name: recipe.name,
       version: newPatchVersion,
       owner_id: userId,
-      brew_lab_id: labId,
+      brew_lab_id: recipe.brew_lab_id,
       updated_at: Date.now(),
       style: recipe.style,
     });
 
-    await ctx.db.patch(labId, {
+    await ctx.db.patch(recipe.brew_lab_id, {
       associated_recipes: (found.associated_recipes || []).concat(
         args.recipeId,
       ),

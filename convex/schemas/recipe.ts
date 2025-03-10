@@ -39,4 +39,22 @@ export const recipe_schema = defineTable({
   ingredients: v.array(v.object({})),
 })
   .index("by_owner", ["owner_id"])
-  .index("by_brew_lab_by_owner", ["brew_lab_id", "owner_id"]);
+  .index("by_brew_lab", ["brew_lab_id"])
+  .index("by_brew_lab_by_owner", ["brew_lab_id", "owner_id"])
+  .index("by_brew_lab_by_owner_id_by_major_version", [
+    "brew_lab_id",
+    "owner_id",
+    "version.major",
+  ])
+  .index("by_brew_lab_by_owner_id_by_minor_version", [
+    "brew_lab_id",
+    "owner_id",
+    "version.major",
+    "version.minor",
+  ])
+  .index("by_brew_lab_by_owner_id_by_patch_version", [
+    "brew_lab_id",
+    "version.major",
+    "version.minor",
+    "version.patch",
+  ]);

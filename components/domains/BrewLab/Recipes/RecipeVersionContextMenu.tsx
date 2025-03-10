@@ -11,16 +11,23 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { api } from "@/convex/_generated/api";
-import { Id } from "@/convex/_generated/dataModel";
+import { Doc } from "@/convex/_generated/dataModel";
 import { TooltipArrow } from "@radix-ui/react-tooltip";
-import { useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { Trash2 } from "lucide-react";
-import { PropsWithChildren } from "react";
+import { PropsWithChildren, useEffect } from "react";
 
 export const RecipeVersionContextMenu = ({
   children,
-  recipeId,
-}: PropsWithChildren<{ recipeId: Id<"recipe"> }>) => {
+  recipe,
+}: PropsWithChildren<{ recipe: Doc<"recipe"> }>) => {
+  const highestMajor = useQuery(api.recipe.get.getMaxMajorVersion, {
+    brewLabId: recipe.brew_lab_id,
+  });
+
+  useEffect(() => {
+    console.log({ highestMajor });
+  }, [highestMajor]);
   const createNewMajorVersion = useMutation(api.recipe.createNewMajorVersion);
   const createNewMinorVersion = useMutation(api.recipe.createNewMinorVersion);
   const createNewPatchVersion = useMutation(api.recipe.createNewPatchVersion);
@@ -33,11 +40,11 @@ export const RecipeVersionContextMenu = ({
         <Tooltip delayDuration={1000}>
           <TooltipTrigger asChild>
             <ContextMenuItem
-              className="flex items-center gap-2 justify-between group cursor-pointer"
-              onClick={() => createNewMajorVersion({ recipeId })}
+              className="flex items-center gap-2 justify-between cursor-pointer"
+              onClick={() => createNewMajorVersion({ recipeId: recipe._id })}
             >
               Recipe
-              <VersioningIcon type="major" />
+              <VersioningIcon type="major" recipe={recipe} />
             </ContextMenuItem>
           </TooltipTrigger>
           <TooltipContent side="right" avoidCollisions>
@@ -49,10 +56,10 @@ export const RecipeVersionContextMenu = ({
           <TooltipTrigger asChild>
             <ContextMenuItem
               className="flex items-center gap-2 justify-between group cursor-pointer"
-              onClick={() => createNewMinorVersion({ recipeId })}
+              onClick={() => createNewMinorVersion({ recipeId: recipe._id })}
             >
               Process
-              <VersioningIcon type="minor" />
+              <VersioningIcon type="minor" recipe={recipe} />
             </ContextMenuItem>
           </TooltipTrigger>
           <TooltipContent side="right" avoidCollisions>
@@ -64,10 +71,10 @@ export const RecipeVersionContextMenu = ({
           <TooltipTrigger asChild>
             <ContextMenuItem
               className="flex items-center gap-2 justify-between group cursor-pointer"
-              onClick={() => createNewPatchVersion({ recipeId })}
+              onClick={() => createNewPatchVersion({ recipeId: recipe._id })}
             >
               Adjust
-              <VersioningIcon type="patch" />
+              <VersioningIcon type="patch" recipe={recipe} />
             </ContextMenuItem>
           </TooltipTrigger>
           <TooltipContent side="right" avoidCollisions>
@@ -89,45 +96,49 @@ type VersionType = "major" | "minor" | "patch";
 
 interface VersioningIconProps {
   type: VersionType;
+  recipe: Doc<"recipe">;
 }
 
-const VersioningIcon = ({ type }: VersioningIconProps) => {
+const VersioningIcon = ({ type, recipe }: VersioningIconProps) => {
+  const highestMajor = useQuery(api.recipe.get.getMaxMajorVersion, {
+    brewLabId: recipe.brew_lab_id,
+  });
+  const highestMinor = useQuery(api.recipe.get.getMaxMinorVersion, {
+    brewLabId: recipe.brew_lab_id,
+    majorVersion: recipe.version.major,
+  });
+  const highestPatch = useQuery(api.recipe.get.getMaxPatchVersion, {
+    brewLabId: recipe.brew_lab_id,
+    majorVersion: recipe.version.major,
+    minorVersion: recipe.version.minor,
+  });
   switch (type) {
     case "major":
       return (
-        <span className="text-sm font-medium text-zinc-400 group flex items-center">
+        <span className="text-sm font-medium text-zinc-400">
           v
-          <span className="text-foreground font-bold block group-hover:hidden">
-            1
-          </span>
-          <span className="text-foreground font-bold hidden group-hover:block">
-            2
+          <span className="text-foreground font-bold">
+            {highestMajor ? highestMajor + 1 : 1}
           </span>
           .0.0
         </span>
       );
     case "minor":
       return (
-        <span className="text-sm font-medium text-zinc-400 group flex items-center">
-          v1.
-          <span className="text-foreground font-bold block group-hover:hidden">
-            1
-          </span>
-          <span className="text-foreground font-bold hidden group-hover:block">
-            2
+        <span className="text-sm font-medium text-zinc-400">
+          v{recipe.version.major}.
+          <span className="text-foreground font-bold">
+            {highestMinor ? highestMinor + 1 : 1}
           </span>
           .0
         </span>
       );
     case "patch":
       return (
-        <span className="text-sm font-medium text-zinc-400 group flex items-center">
-          v 1.0.
-          <span className="text-foreground font-bold block group-hover:hidden">
-            1
-          </span>
-          <span className="text-foreground font-bold hidden group-hover:block">
-            2
+        <span className="text-sm font-medium text-zinc-400">
+          v{recipe.version.major}.{recipe.version.minor}.
+          <span className="text-foreground font-bold">
+            {highestPatch ? highestPatch + 1 : 1}
           </span>
         </span>
       );

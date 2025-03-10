@@ -9,7 +9,7 @@ export const RecipeCard = ({ recipe }: { recipe: Doc<"recipe"> }) => {
   }
 
   return (
-    <RecipeVersionContextMenu recipeId={recipe._id}>
+    <RecipeVersionContextMenu recipe={recipe}>
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">

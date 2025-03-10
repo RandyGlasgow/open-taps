@@ -35,8 +35,6 @@ export function DialogNewRecipe({ children }: PropsWithChildren) {
     const formData = new FormData(e.target as HTMLFormElement);
     const data = Object.fromEntries(formData);
 
-    console.log({ data });
-
     // verify that the name is not empty
     if (!data.name) {
       console.error("Name is required");

@@ -10,7 +10,6 @@ export const Recipes = ({ brewLabId }: { brewLabId: Id<"brew_lab"> }) => {
   const recipes = useQuery(api.recipe.getAllRecipesByBrewLabId, { brewLabId });
 
   const orderedRecipes = getOrderedRecipes(recipes || []);
-  console.log({ orderedRecipes });
   const hasRecipes = recipes?.length && recipes.length > 0;
 
   return (
