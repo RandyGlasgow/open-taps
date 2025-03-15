@@ -1,11 +1,10 @@
 import { Doc } from "../../../convex/_generated/dataModel";
-
 /**
  * Sort recipes by version (major, minor, patch) in descending order
  * @param recipes - The recipes to sort
  * @returns The sorted recipes in descending order
  */
-const sortRecipesByVersion = (recipes: Doc<"recipe">[] = []) => {
+export const sortRecipesByVersion = (recipes: Doc<"recipe">[] = []) => {
   recipes.sort((a, b) => {
     // First compare major versions
     if (a.version.major !== b.version.major) {

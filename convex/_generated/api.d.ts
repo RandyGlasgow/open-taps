@@ -16,6 +16,7 @@ import type {
 import type * as auth from "../auth.js";
 import type * as beer_styles from "../beer_styles.js";
 import type * as brew_lab from "../brew_lab.js";
+import type * as hops from "../hops.js";
 import type * as http from "../http.js";
 import type * as recipe_get from "../recipe/get.js";
 import type * as recipe_lib_sortVersions from "../recipe/lib/sortVersions.js";
@@ -37,6 +38,7 @@ declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   beer_styles: typeof beer_styles;
   brew_lab: typeof brew_lab;
+  hops: typeof hops;
   http: typeof http;
   "recipe/get": typeof recipe_get;
   "recipe/lib/sortVersions": typeof recipe_lib_sortVersions;

@@ -32,15 +32,6 @@ export class ErrorBoundary extends Component<
   render(): ReactNode {
     if (this.state.hasError) {
       toast.error("Something went wrong, redirecting to projects");
-      // Redirect to the specified path
-      if (typeof window !== "undefined") {
-        const referrer = document.referrer;
-        if (referrer) {
-          window.location.href = referrer;
-        } else {
-          window.location.href = this.props.redirect;
-        }
-      }
       return null;
     }
 

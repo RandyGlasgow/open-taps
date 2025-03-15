@@ -36,7 +36,25 @@ export const recipe_schema = defineTable({
     v.literal("retired"),
   ),
 
-  ingredients: v.array(v.object({})),
+  ingredients: v.array(
+    v.object({
+      type: v.union(
+        v.literal("fermentable"),
+        v.literal("hop"),
+        v.literal("yeast"),
+        v.literal("other"),
+      ),
+      name: v.string(),
+      amount: v.object({
+        value: v.number(),
+        unit: v.union(
+          v.literal("kilograms"),
+          v.literal("pounds"),
+          v.literal("grams"),
+        ),
+      }),
+    }),
+  ),
 })
   .index("by_owner", ["owner_id"])
   .index("by_brew_lab", ["brew_lab_id"])

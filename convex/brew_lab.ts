@@ -95,7 +95,44 @@ export const deleteBrewLab = mutation({
       throw new Error("User does not own this brew lab");
     }
 
-    await ctx.db.delete(args.id);
+    await Promise.all([
+      ...(brewLab.associated_recipes ?? []).map(async (recipeId) => {
+        await ctx.db.delete(recipeId);
+      }),
+      ctx.db.delete(brewLab.graph_id),
+      ctx.db.delete(args.id),
+    ]);
+  },
+});
+
+export const deleteBrewLabRecipe = mutation({
+  args: {
+    id: v.id("brew_lab"),
+    recipeId: v.id("recipe"),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      throw new Error("User not authenticated");
+    }
+
+    const brewLab = await ctx.db.get(args.id);
+    if (!brewLab) {
+      throw new Error("Brew lab not found");
+    }
+
+    if (brewLab.owner_id !== userId) {
+      throw new Error("User does not own this brew lab");
+    }
+
+    await Promise.all([
+      ctx.db.delete(args.recipeId),
+      ctx.db.patch(brewLab._id, {
+        associated_recipes: (brewLab.associated_recipes ?? []).filter(
+          (recipeId: string) => recipeId !== args.recipeId,
+        ),
+      }),
+    ]);
   },
 });
 
@@ -134,5 +171,38 @@ export const getBrewLabList = query({
       .query("brew_lab")
       .withIndex("by_owner", (q) => q.eq("owner_id", userId))
       .collect();
+  },
+});
+
+export const getAssociatedRecipes = query({
+  args: {
+    id: v.id("brew_lab"),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      throw new Error("User not authenticated");
+    }
+
+    const brewLab = await ctx.db.get(args.id);
+    if (!brewLab) {
+      throw new Error("Brew lab not found");
+    }
+
+    if (brewLab.owner_id !== userId) {
+      throw new Error("User does not own this brew lab");
+    }
+
+    if (!brewLab.associated_recipes) {
+      return [];
+    }
+
+    const found = await Promise.all(
+      brewLab.associated_recipes.map(async (recipeId) => {
+        return await ctx.db.get(recipeId);
+      }),
+    ).then((recipes) => recipes.filter((recipe) => recipe !== null));
+
+    return found;
   },
 });

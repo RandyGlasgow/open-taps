@@ -15,80 +15,103 @@ import { Doc } from "@/convex/_generated/dataModel";
 import { TooltipArrow } from "@radix-ui/react-tooltip";
 import { useMutation, useQuery } from "convex/react";
 import { Trash2 } from "lucide-react";
-import { PropsWithChildren, useEffect } from "react";
+import { PropsWithChildren } from "react";
+import { toast } from "sonner";
 
 export const RecipeVersionContextMenu = ({
   children,
   recipe,
 }: PropsWithChildren<{ recipe: Doc<"recipe"> }>) => {
-  const highestMajor = useQuery(api.recipe.get.getMaxMajorVersion, {
-    brewLabId: recipe.brew_lab_id,
-  });
-
-  useEffect(() => {
-    console.log({ highestMajor });
-  }, [highestMajor]);
   const createNewMajorVersion = useMutation(api.recipe.createNewMajorVersion);
   const createNewMinorVersion = useMutation(api.recipe.createNewMinorVersion);
   const createNewPatchVersion = useMutation(api.recipe.createNewPatchVersion);
+  const deleteRecipe = useMutation(api.brew_lab.deleteBrewLabRecipe);
+
+  const isRootRecipe =
+    recipe.version.major === 1 &&
+    recipe.version.minor === 0 &&
+    recipe.version.patch === 0;
+
   return (
-    <ContextMenu>
-      <ContextMenuTrigger asChild>{children}</ContextMenuTrigger>
-      <ContextMenuContent className="w-44">
-        <span className="text-sm font-medium p-2">Change</span>
-        <ContextMenuSeparator />
-        <Tooltip delayDuration={1000}>
-          <TooltipTrigger asChild>
-            <ContextMenuItem
-              className="flex items-center gap-2 justify-between cursor-pointer"
-              onClick={() => createNewMajorVersion({ recipeId: recipe._id })}
-            >
-              Recipe
-              <VersioningIcon type="major" recipe={recipe} />
-            </ContextMenuItem>
-          </TooltipTrigger>
-          <TooltipContent side="right" avoidCollisions>
-            <TooltipArrow />
-            Major changes to style or core ingredients
-          </TooltipContent>
-        </Tooltip>
-        <Tooltip delayDuration={1000}>
-          <TooltipTrigger asChild>
-            <ContextMenuItem
-              className="flex items-center gap-2 justify-between group cursor-pointer"
-              onClick={() => createNewMinorVersion({ recipeId: recipe._id })}
-            >
-              Process
-              <VersioningIcon type="minor" recipe={recipe} />
-            </ContextMenuItem>
-          </TooltipTrigger>
-          <TooltipContent side="right" avoidCollisions>
-            <TooltipArrow />
-            Changes to brewing techniques or equipment
-          </TooltipContent>
-        </Tooltip>
-        <Tooltip delayDuration={1000}>
-          <TooltipTrigger asChild>
-            <ContextMenuItem
-              className="flex items-center gap-2 justify-between group cursor-pointer"
-              onClick={() => createNewPatchVersion({ recipeId: recipe._id })}
-            >
-              Adjust
-              <VersioningIcon type="patch" recipe={recipe} />
-            </ContextMenuItem>
-          </TooltipTrigger>
-          <TooltipContent side="right" avoidCollisions>
-            <TooltipArrow />
-            Minor tweaks to quantities or timing
-          </TooltipContent>
-        </Tooltip>
-        <ContextMenuSeparator />
-        <ContextMenuItem className="flex items-center gap-2 cursor-pointer">
-          <Trash2 className="w-4 h-4" />
-          Delete
-        </ContextMenuItem>
-      </ContextMenuContent>
-    </ContextMenu>
+    <>
+      <ContextMenu>
+        <ContextMenuTrigger asChild>{children}</ContextMenuTrigger>
+        <ContextMenuContent className="w-44">
+          <span className="text-sm font-medium p-2">Change</span>
+          <ContextMenuSeparator />
+          <Tooltip delayDuration={1000}>
+            <TooltipTrigger asChild>
+              <ContextMenuItem
+                className="flex items-center gap-2 justify-between cursor-pointer"
+                onClick={() => createNewMajorVersion({ recipeId: recipe._id })}
+              >
+                Recipe
+                <VersioningIcon type="major" recipe={recipe} />
+              </ContextMenuItem>
+            </TooltipTrigger>
+            <TooltipContent side="right" avoidCollisions>
+              <TooltipArrow />
+              Major changes to core ingredients
+            </TooltipContent>
+          </Tooltip>
+          <Tooltip delayDuration={1000}>
+            <TooltipTrigger asChild>
+              <ContextMenuItem
+                className="flex items-center gap-2 justify-between group cursor-pointer"
+                onClick={() => createNewMinorVersion({ recipeId: recipe._id })}
+              >
+                Process
+                <VersioningIcon type="minor" recipe={recipe} />
+              </ContextMenuItem>
+            </TooltipTrigger>
+            <TooltipContent side="right" avoidCollisions>
+              <TooltipArrow />
+              Changes to brewing techniques or equipment
+            </TooltipContent>
+          </Tooltip>
+          <Tooltip delayDuration={1000}>
+            <TooltipTrigger asChild>
+              <ContextMenuItem
+                className="flex items-center gap-2 justify-between group cursor-pointer"
+                onClick={() => createNewPatchVersion({ recipeId: recipe._id })}
+              >
+                Adjust
+                <VersioningIcon type="patch" recipe={recipe} />
+              </ContextMenuItem>
+            </TooltipTrigger>
+            <TooltipContent side="right" avoidCollisions>
+              <TooltipArrow />
+              Minor tweaks to quantities or timing
+            </TooltipContent>
+          </Tooltip>
+          <ContextMenuSeparator />
+          <ContextMenuItem
+            className="flex items-center gap-2 cursor-pointer"
+            onClick={() => {
+              if (isRootRecipe) {
+                toast.error("Cannot delete root recipe", {
+                  richColors: true,
+                  dismissible: true,
+                });
+                return;
+              }
+              deleteRecipe({
+                id: recipe.brew_lab_id,
+                recipeId: recipe._id,
+              }).then(() => {
+                toast.success("Recipe deleted", {
+                  richColors: true,
+                  dismissible: true,
+                });
+              });
+            }}
+          >
+            <Trash2 className="w-4 h-4" />
+            Delete
+          </ContextMenuItem>
+        </ContextMenuContent>
+      </ContextMenu>
+    </>
   );
 };
 

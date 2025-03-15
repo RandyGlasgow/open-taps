@@ -17,8 +17,9 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useRoute } from "@/constants/routes";
+import { api } from "@/convex/_generated/api";
 import { Doc } from "@/convex/_generated/dataModel";
-import { TooltipArrow } from "@radix-ui/react-tooltip";
+import { useMutation } from "convex/react";
 import { EllipsisVerticalIcon, Star } from "lucide-react";
 import { useRef } from "react";
 
@@ -32,6 +33,7 @@ export const BrewLabCard = ({ brewLab }: { brewLab: Doc<"brew_lab"> }) => {
     }
     router.push(`/dashboard/brew-lab/${brewLab._id}`);
   };
+  const deleteBrewLab = useMutation(api.brew_lab.deleteBrewLab);
 
   return (
     <Card
@@ -61,26 +63,17 @@ export const BrewLabCard = ({ brewLab }: { brewLab: Doc<"brew_lab"> }) => {
             </DropdownMenuTrigger>
             <DropdownMenuContent ref={refToElement}>
               <DropdownMenuItem>Add to Cellar</DropdownMenuItem>
-              <DropdownMenuItem>Delete</DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => deleteBrewLab({ id: brewLab._id })}
+              >
+                Delete
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <CardDescription
-              className="line-clamp-1"
-              title={brewLab.description}
-            >
-              {brewLab.description || "No description"}
-            </CardDescription>
-          </TooltipTrigger>
-          {brewLab.description && (
-            <TooltipContent>
-              <TooltipArrow />
-              {brewLab.description}
-            </TooltipContent>
-          )}
-        </Tooltip>
+        <CardDescription className="line-clamp-1" title={brewLab.description}>
+          {brewLab.description || "No description"}
+        </CardDescription>
       </CardHeader>
     </Card>
   );

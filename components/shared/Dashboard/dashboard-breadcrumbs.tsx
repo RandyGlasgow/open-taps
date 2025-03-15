@@ -1,8 +1,7 @@
-"use client";
 import { HomeIcon } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Fragment, useMemo } from "react";
+import { Fragment } from "react";
+import { createPortal } from "react-dom";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -11,41 +10,50 @@ import {
   BreadcrumbSeparator,
 } from "../../ui/breadcrumb";
 
+const PORTAL_ID = "portal-to-breadcrumbs";
 export const DashboardBreadcrumb = () => {
-  const pathname = usePathname();
-
-  const memo = useMemo(() => {
-    return pathname
-      .split("/")
-      .filter(Boolean)
-      .map((part, index, array) => {
-        if (index === 0) {
-          return null;
-        }
-        return (
-          <Fragment key={part}>
-            <BreadcrumbSeparator className="hidden md:block" />
-            <BreadcrumbItem>
-              <BreadcrumbLink asChild>
-                <Link href={`/${array.slice(0, index).join("/")}/${part}`}>
-                  {part}
-                </Link>
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-          </Fragment>
-        );
-      });
-  }, [pathname]);
   return (
     <Breadcrumb>
-      <BreadcrumbList>
+      <BreadcrumbList id={PORTAL_ID}>
         <BreadcrumbItem className="hidden md:block">
           <BreadcrumbLink href="/dashboard">
             <HomeIcon className="w-4 h-4" />
           </BreadcrumbLink>
         </BreadcrumbItem>
-        {memo}
       </BreadcrumbList>
     </Breadcrumb>
   );
+};
+
+type BreadcrumbBuilderType = {
+  alias: string;
+  pathname: string;
+};
+
+export const InjectBreadcrumbs = ({
+  pathname,
+  loading = false,
+}: {
+  pathname: BreadcrumbBuilderType[];
+  loading?: boolean;
+}) => {
+  if (loading) {
+    return null;
+  }
+  const portal = document.getElementById(PORTAL_ID);
+  if (portal) {
+    return createPortal(
+      pathname.map((breadcrumb) => (
+        <Fragment key={breadcrumb.pathname}>
+          <BreadcrumbSeparator className="hidden md:block" />
+          <BreadcrumbItem>
+            <BreadcrumbLink asChild>
+              <Link href={breadcrumb.pathname}>{breadcrumb.alias}</Link>
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+        </Fragment>
+      )),
+      portal,
+    );
+  }
 };

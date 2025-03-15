@@ -19,7 +19,7 @@ export default function Page({ children }: { children: React.ReactNode }) {
             <DashboardBreadcrumb />
           </div>
         </header>
-        <div className="flex flex-1 flex-col gap-4 p-4 pt-0 h-screen">
+        <div className="flex flex-1 flex-col gap-4 p-4 pt-0 overflow-y-hidden">
           {children}
         </div>
       </SidebarInset>
