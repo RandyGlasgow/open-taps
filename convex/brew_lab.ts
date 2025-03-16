@@ -53,26 +53,39 @@ export const updateBrewLab = mutation({
     description: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
+    const [userId, brewLab] = await Promise.all([
+      getAuthUserId(ctx),
+      ctx.db.get(args.id),
+    ]);
+
     if (!userId) {
       throw new Error("User not authenticated");
     }
-
-    const brewLab = await ctx.db.get(args.id);
     if (!brewLab) {
       throw new Error("Brew lab not found");
     }
-
     if (brewLab.owner_id !== userId) {
       throw new Error("User does not own this brew lab");
     }
-
-    await ctx.db.patch(args.id, {
-      name: args.name,
-      style: args.style,
-      description: args.description,
-      updated_at: Date.now(),
-    });
+    await Promise.all([
+      ctx.db.patch(args.id, {
+        ...(args.name !== undefined && { name: args.name }),
+        ...(args.style !== undefined && { style: args.style }),
+        ...(args.description !== undefined && {
+          description: args.description,
+        }),
+        updated_at: Date.now(),
+      }),
+      ctx.db.patch(brewLab.graph_id, {
+        updated_at: Date.now(),
+      }),
+      ...(brewLab.associated_recipes ?? []).map(async (recipeId) => {
+        await ctx.db.patch(recipeId, {
+          name: args.name,
+          updated_at: Date.now(),
+        });
+      }),
+    ]);
   },
 });
 
@@ -81,12 +94,15 @@ export const deleteBrewLab = mutation({
     id: v.id("brew_lab"),
   },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
+    const [userId, brewLab] = await Promise.all([
+      getAuthUserId(ctx),
+      ctx.db.get(args.id),
+    ]);
+
     if (!userId) {
       throw new Error("User not authenticated");
     }
 
-    const brewLab = await ctx.db.get(args.id);
     if (!brewLab) {
       throw new Error("Brew lab not found");
     }
@@ -111,12 +127,15 @@ export const deleteBrewLabRecipe = mutation({
     recipeId: v.id("recipe"),
   },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
+    const [userId, brewLab] = await Promise.all([
+      getAuthUserId(ctx),
+      ctx.db.get(args.id),
+    ]);
+
     if (!userId) {
       throw new Error("User not authenticated");
     }
 
-    const brewLab = await ctx.db.get(args.id);
     if (!brewLab) {
       throw new Error("Brew lab not found");
     }
@@ -141,12 +160,15 @@ export const getBrewLab = query({
     id: v.id("brew_lab"),
   },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
+    const [userId, brewLab] = await Promise.all([
+      getAuthUserId(ctx),
+      ctx.db.get(args.id),
+    ]);
+
     if (!userId) {
       throw new Error("User not authenticated");
     }
 
-    const brewLab = await ctx.db.get(args.id);
     if (!brewLab) {
       throw new Error("Brew lab not found");
     }
@@ -179,12 +201,15 @@ export const getAssociatedRecipes = query({
     id: v.id("brew_lab"),
   },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
+    const [userId, brewLab] = await Promise.all([
+      getAuthUserId(ctx),
+      ctx.db.get(args.id),
+    ]);
+
     if (!userId) {
       throw new Error("User not authenticated");
     }
 
-    const brewLab = await ctx.db.get(args.id);
     if (!brewLab) {
       throw new Error("Brew lab not found");
     }

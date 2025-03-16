@@ -23,8 +23,6 @@ export const BrewLabLanding = () => {
   const brewLabs = useQuery(api.brew_lab.getBrewLabList) || [];
 
   const groupedBrewLabs = groupBrewLabs(brewLabs);
-  console.log(groupedBrewLabs);
-
   return Object.entries(groupedBrewLabs).map(([brewType, brewLabs]) => (
     <BrewLabCardGroup key={brewType} brewLab={brewLabs} />
   ));

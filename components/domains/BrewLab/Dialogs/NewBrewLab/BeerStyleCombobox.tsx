@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import {
   Command,
   CommandEmpty,
-  CommandGroup,
   CommandInput,
   CommandItem,
   CommandList,
@@ -67,43 +66,26 @@ export function BeerStyleCombobox({
             <CommandEmpty>
               🤔 It looks like we don&apos;t have that style yet.
             </CommandEmpty>
-            <CommandGroup heading="Beer Styles">
-              {beerStyles?.map((style) => (
-                <CommandItem
-                  keywords={[style.name, style.category]}
-                  key={style._id}
-                  value={style.name}
-                  onSelect={() => {
-                    setValue(style.name);
-                    setOpen(false);
-                  }}
-                >
-                  <div className="flex flex-col gap-1">
-                    {style.name}
-                    <div className="flex gap-1 text-xs">
-                      <span
-                        className="rounded-full bg-muted px-2 py-0.5
-                        data-[type=ale]:bg-amber-200 data-[type=ale]:text-amber-900
-                        data-[type=lager]:bg-blue-200 data-[type=lager]:text-blue-900
-                        data-[type=hybrid]:bg-green-200 data-[type=hybrid]:text-green-900 capitalize"
-                        data-type={style.category}
-                      >
-                        {style.category}
-                      </span>
-                      <span className="flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-muted-foreground">
-                        {style.origin}
-                      </span>
-                    </div>
-                  </div>
-                  <Check
-                    className={cn(
-                      "ml-auto",
-                      value === style.name ? "opacity-100" : "opacity-0",
-                    )}
-                  />
-                </CommandItem>
-              ))}
-            </CommandGroup>
+
+            {beerStyles?.map((style) => (
+              <CommandItem
+                key={style._id}
+                value={style.name}
+                onSelect={() => {
+                  setValue(style.name);
+                  setOpen(false);
+                }}
+              >
+                {style.name}
+
+                <Check
+                  className={cn(
+                    "ml-auto",
+                    value === style.name ? "opacity-100" : "opacity-0",
+                  )}
+                />
+              </CommandItem>
+            ))}
           </CommandList>
         </Command>
       </PopoverContent>
