@@ -66,6 +66,14 @@ export const createRecipe = mutation({
     if (brewLab.owner_id !== userId) {
       throw new Error("Unauthorized");
     }
+    if (!brewLab.style) {
+      throw new Error("Brew lab style not found");
+    }
+
+    const style = await ctx.db.get(brewLab.style);
+    if (!style) {
+      throw new Error("Style not found");
+    }
 
     const recipe = await ctx.db.insert("recipe", {
       name: brewLab.name,
@@ -78,8 +86,8 @@ export const createRecipe = mutation({
       brew_lab_id: args.brewLabId,
       updated_at: Date.now(),
       style: {
-        name: "Lager",
-        category: "Beer",
+        name: style.name,
+        category: style.category,
       },
       batch_size: {
         value: 0,

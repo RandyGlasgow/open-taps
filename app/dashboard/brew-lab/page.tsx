@@ -10,7 +10,7 @@ export default function Page() {
   return (
     <>
       <Title className="flex justify-between items-center">
-        <div>Recipe Trees</div>
+        <div>Brew Labs</div>
         <DialogNewRecipe>
           <Button size="sm">
             <PlusIcon className="size-4" />

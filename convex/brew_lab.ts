@@ -5,7 +5,7 @@ import { mutation, query } from "./_generated/server";
 export const createBrewLab = mutation({
   args: {
     name: v.string(),
-    style: v.optional(v.id("beer_style_catalog")),
+    style: v.id("catalog_beer_style"),
     description: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
@@ -49,7 +49,7 @@ export const updateBrewLab = mutation({
   args: {
     id: v.id("brew_lab"),
     name: v.optional(v.string()),
-    style: v.optional(v.id("beer_style_catalog")),
+    style: v.optional(v.id("catalog_beer_style")),
     description: v.optional(v.string()),
   },
   handler: async (ctx, args) => {

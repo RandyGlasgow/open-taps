@@ -3,7 +3,7 @@ import { v } from "convex/values";
 
 export const brew_lab_schema = defineTable({
   name: v.string(),
-  style: v.optional(v.id("beer_style_catalog")),
+  style: v.optional(v.id("catalog_beer_style")),
   description: v.optional(v.string()),
   owner_id: v.id("users"),
   updated_at: v.number(),

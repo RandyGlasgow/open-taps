@@ -1,8 +1,5 @@
 "use client";
 
-import { Check, ChevronsUpDown } from "lucide-react";
-import * as React from "react";
-
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -20,6 +17,9 @@ import {
 import { api } from "@/convex/_generated/api";
 import { cn } from "@/lib/utils";
 import { useQuery } from "convex/react";
+import { Check, ChevronsUpDown } from "lucide-react";
+import * as React from "react";
+
 export function BeerStyleCombobox({
   name,
   onChange,
@@ -38,9 +38,7 @@ export function BeerStyleCombobox({
     <Popover open={open} onOpenChange={setOpen}>
       <input
         type="hidden"
-        value={
-          beerStyles?.find((style) => style.display_name === value)?._id || ""
-        }
+        value={beerStyles?.find((style) => style.name === value)?._id || ""}
         onChange={onChange}
         name={name}
       />
@@ -53,8 +51,7 @@ export function BeerStyleCombobox({
           className="justify-between"
         >
           {value
-            ? beerStyles?.find((style) => style.display_name === value)
-                ?.display_name
+            ? beerStyles?.find((style) => style.name === value)?.name
             : "What style are you brewing?"}
           <ChevronsUpDown className="opacity-50" />
         </Button>
@@ -70,23 +67,38 @@ export function BeerStyleCombobox({
             <CommandEmpty>
               🤔 It looks like we don&apos;t have that style yet.
             </CommandEmpty>
-            <CommandGroup>
+            <CommandGroup heading="Beer Styles">
               {beerStyles?.map((style) => (
                 <CommandItem
+                  keywords={[style.name, style.category]}
                   key={style._id}
-                  value={style.display_name}
+                  value={style.name}
                   onSelect={() => {
-                    setValue(style.display_name);
+                    setValue(style.name);
                     setOpen(false);
                   }}
                 >
-                  {style.display_name}
+                  <div className="flex flex-col gap-1">
+                    {style.name}
+                    <div className="flex gap-1 text-xs">
+                      <span
+                        className="rounded-full bg-muted px-2 py-0.5
+                        data-[type=ale]:bg-amber-200 data-[type=ale]:text-amber-900
+                        data-[type=lager]:bg-blue-200 data-[type=lager]:text-blue-900
+                        data-[type=hybrid]:bg-green-200 data-[type=hybrid]:text-green-900 capitalize"
+                        data-type={style.category}
+                      >
+                        {style.category}
+                      </span>
+                      <span className="flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-muted-foreground">
+                        {style.origin}
+                      </span>
+                    </div>
+                  </div>
                   <Check
                     className={cn(
                       "ml-auto",
-                      value === style.display_name
-                        ? "opacity-100"
-                        : "opacity-0",
+                      value === style.name ? "opacity-100" : "opacity-0",
                     )}
                   />
                 </CommandItem>

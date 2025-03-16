@@ -43,7 +43,7 @@ export function DialogNewRecipe({ children }: PropsWithChildren) {
 
     const recipeTreeId = await postProject({
       description: String(`${data.idea}`),
-      style: String(data.style) as Id<"beer_style_catalog">,
+      style: String(data.style) as Id<"catalog_beer_style">,
       name: String(`${data.name}`),
     });
 

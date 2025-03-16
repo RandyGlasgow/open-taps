@@ -2,9 +2,9 @@ import { authTables } from "@convex-dev/auth/server";
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 import { graph_schema, node_schema } from "./graph.schema";
+import { beer_style_catalog_schema as catalog_beer_style_schema } from "./schemas/beer_styles";
 import { brew_lab_schema } from "./schemas/brew_lab";
 import { recipe_schema } from "./schemas/recipe";
-
 // The schema is normally optional, but Convex Auth
 // requires indexes defined on `authTables`.
 // The schema provides more precise TypeScript types.
@@ -105,13 +105,26 @@ const hop_catalog_schema = defineTable({
 
 export default defineSchema({
   ...authTables,
+  users: defineTable({
+    name: v.optional(v.string()),
+    image: v.optional(v.string()),
+    email: v.optional(v.string()),
+    emailVerificationTime: v.optional(v.number()),
+    phone: v.optional(v.string()),
+    phoneVerificationTime: v.optional(v.number()),
+    isAnonymous: v.optional(v.boolean()),
+    authorization: v.optional(v.array(v.literal("admin"))),
+  })
+    .index("email", ["email"])
+    .index("phone", ["phone"]),
   water_chem: water_chem_schema,
-  adjunct_catalog: adjunct_catalog_schema,
   brewing_terms_catalog: brewing_terms_catalog_schema,
   beer_style_catalog: beer_style_catalog_schema,
   brand_catalog: brand_catalog_schema,
   brew_lab: brew_lab_schema,
+  catalog_beer_style: catalog_beer_style_schema,
 
+  adjunct_catalog: adjunct_catalog_schema,
   yeast_catalog: yeast_catalog_schema,
   tag_catalog: tag_catalog_schema,
   hop_catalog: hop_catalog_schema,

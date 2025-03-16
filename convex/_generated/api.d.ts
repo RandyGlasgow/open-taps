@@ -22,6 +22,7 @@ import type * as recipe_get from "../recipe/get.js";
 import type * as recipe_lib_sortVersions from "../recipe/lib/sortVersions.js";
 import type * as recipe_lib_validateUser from "../recipe/lib/validateUser.js";
 import type * as recipe from "../recipe.js";
+import type * as schemas_beer_styles from "../schemas/beer_styles.js";
 import type * as schemas_brew_lab from "../schemas/brew_lab.js";
 import type * as schemas_recipe from "../schemas/recipe.js";
 import type * as user from "../user.js";
@@ -44,6 +45,7 @@ declare const fullApi: ApiFromModules<{
   "recipe/lib/sortVersions": typeof recipe_lib_sortVersions;
   "recipe/lib/validateUser": typeof recipe_lib_validateUser;
   recipe: typeof recipe;
+  "schemas/beer_styles": typeof schemas_beer_styles;
   "schemas/brew_lab": typeof schemas_brew_lab;
   "schemas/recipe": typeof schemas_recipe;
   user: typeof user;

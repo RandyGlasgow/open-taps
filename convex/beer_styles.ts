@@ -4,14 +4,14 @@ import { query } from "./_generated/server";
 export const getBeerStyles = query({
   args: {},
   handler: async (ctx) => {
-    return (await ctx.db.query("beer_style_catalog").collect()).sort((a, b) =>
-      a.display_name.localeCompare(b.display_name),
+    return (await ctx.db.query("catalog_beer_style").collect()).sort((a, b) =>
+      a.name.localeCompare(b.name),
     );
   },
 });
 
 export const getBeerStyleById = query({
-  args: { id: v.id("beer_style_catalog") },
+  args: { id: v.id("catalog_beer_style") },
   handler: async (ctx, args) => {
     return await ctx.db.get(args.id);
   },
